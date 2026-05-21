@@ -1,0 +1,483 @@
+{
+  "title": "Planta esquemática de prueba: casa compacta con patio",
+  "disclaimer": "This is a conceptual sketch for discussion only. An architect must validate and design the actual project.",
+  "inputSummary": "Casa chica para una pareja con un hijo, cocina integrada, buena luz natural y patio con parrilla.",
+  "lot": {
+    "shape": "rectangular",
+    "accessSide": "front",
+    "orientation": "unknown",
+    "notes": "Lote conceptual rectangular con acceso frontal. No se usan medidas reales."
+  },
+  "assumptions": [
+    "La vivienda se organiza en una sola planta.",
+    "El área social se conecta visual y funcionalmente con el patio.",
+    "Los dormitorios se agrupan en un sector más privado.",
+    "La cocina integrada se ubica cerca del patio y la parrilla."
+  ],
+  "macroZones": [
+    {
+      "kind": "access",
+      "label": "Acceso y circulación",
+      "x": 8,
+      "y": 8,
+      "width": 18,
+      "height": 30,
+      "description": "Entrada y distribución hacia sectores social y privado."
+    },
+    {
+      "kind": "social",
+      "label": "Núcleo social",
+      "x": 26,
+      "y": 8,
+      "width": 54,
+      "height": 32,
+      "description": "Sala-comedor y cocina integrada."
+    },
+    {
+      "kind": "private",
+      "label": "Ala privada",
+      "x": 8,
+      "y": 40,
+      "width": 34,
+      "height": 48,
+      "description": "Dormitorios agrupados."
+    },
+    {
+      "kind": "service",
+      "label": "Núcleo húmedo",
+      "x": 64,
+      "y": 40,
+      "width": 20,
+      "height": 16,
+      "description": "Baño y lavadero compactos."
+    },
+    {
+      "kind": "outdoor",
+      "label": "Patio / exterior",
+      "x": 42,
+      "y": 42,
+      "width": 46,
+      "height": 46,
+      "description": "Expansión social hacia el exterior."
+    }
+  ],
+  "zones": [
+    {
+      "id": "ACCESO",
+      "label": "ACCESO",
+      "group": "access",
+      "type": "flex",
+      "description": "Entrada compacta que conecta con el espacio social.",
+      "relativeSize": "small",
+      "x": 8,
+      "y": 8,
+      "width": 18,
+      "height": 16,
+      "priority": "required",
+      "naturalLight": "medium",
+      "privacy": "public"
+    },
+    {
+      "id": "SALA_COMEDOR",
+      "label": "SALA / COMEDOR",
+      "group": "social",
+      "type": "social",
+      "description": "Ambiente principal integrado, pensado para vida familiar y conexión con patio.",
+      "relativeSize": "large",
+      "x": 26,
+      "y": 8,
+      "width": 38,
+      "height": 32,
+      "priority": "required",
+      "naturalLight": "high",
+      "privacy": "public"
+    },
+    {
+      "id": "COCINA",
+      "label": "COCINA",
+      "group": "social",
+      "type": "social",
+      "description": "Cocina abierta integrada al comedor, próxima al patio.",
+      "relativeSize": "medium",
+      "x": 64,
+      "y": 8,
+      "width": 24,
+      "height": 32,
+      "priority": "required",
+      "naturalLight": "medium",
+      "privacy": "public"
+    },
+    {
+      "id": "DISTRIBUIDOR",
+      "label": "DISTRIBUIDOR",
+      "group": "access",
+      "type": "flex",
+      "description": "Circulación interna hacia dormitorios y baño.",
+      "relativeSize": "small",
+      "x": 8,
+      "y": 24,
+      "width": 18,
+      "height": 36,
+      "priority": "required",
+      "naturalLight": "low",
+      "privacy": "semi_private"
+    },
+    {
+      "id": "BANO",
+      "label": "BAÑO",
+      "group": "service",
+      "type": "service",
+      "description": "Baño completo accesible desde el distribuidor.",
+      "relativeSize": "small",
+      "x": 26,
+      "y": 40,
+      "width": 18,
+      "height": 20,
+      "priority": "required",
+      "naturalLight": "medium",
+      "privacy": "semi_private"
+    },
+    {
+      "id": "DORMITORIO_PRINCIPAL",
+      "label": "DORMITORIO PRINCIPAL",
+      "group": "private",
+      "type": "private",
+      "description": "Dormitorio principal ubicado en zona privada.",
+      "relativeSize": "medium",
+      "x": 8,
+      "y": 60,
+      "width": 36,
+      "height": 26,
+      "priority": "required",
+      "naturalLight": "medium",
+      "privacy": "private"
+    },
+    {
+      "id": "DORMITORIO_HIJO",
+      "label": "DORMITORIO HIJO",
+      "group": "private",
+      "type": "private",
+      "description": "Dormitorio individual para hijo, cercano al dormitorio principal.",
+      "relativeSize": "small",
+      "x": 44,
+      "y": 60,
+      "width": 28,
+      "height": 26,
+      "priority": "required",
+      "naturalLight": "medium",
+      "privacy": "private"
+    },
+    {
+      "id": "LAVADERO",
+      "label": "LAVADERO",
+      "group": "service",
+      "type": "service",
+      "description": "Área de servicio próxima a cocina y patio.",
+      "relativeSize": "small",
+      "x": 64,
+      "y": 40,
+      "width": 24,
+      "height": 20,
+      "priority": "optional",
+      "naturalLight": "medium",
+      "privacy": "semi_private"
+    },
+    {
+      "id": "PATIO",
+      "label": "PATIO CON PARRILLA",
+      "group": "outdoor",
+      "type": "outdoor",
+      "description": "Espacio exterior conectado al área social y cocina.",
+      "relativeSize": "large",
+      "x": 44,
+      "y": 40,
+      "width": 44,
+      "height": 46,
+      "priority": "required",
+      "naturalLight": "high",
+      "privacy": "semi_private"
+    }
+  ],
+  "doors": [
+    {
+      "id": "D01",
+      "from": "ACCESO",
+      "to": "SALA_COMEDOR",
+      "wall": "right",
+      "position": 50,
+      "width": 8,
+      "type": "open_passage"
+    },
+    {
+      "id": "D02",
+      "from": "ACCESO",
+      "to": "DISTRIBUIDOR",
+      "wall": "bottom",
+      "position": 50,
+      "width": 7,
+      "type": "door"
+    },
+    {
+      "id": "D03",
+      "from": "DISTRIBUIDOR",
+      "to": "BANO",
+      "wall": "right",
+      "position": 70,
+      "width": 6,
+      "type": "door"
+    },
+    {
+      "id": "D04",
+      "from": "DISTRIBUIDOR",
+      "to": "DORMITORIO_PRINCIPAL",
+      "wall": "bottom",
+      "position": 35,
+      "width": 7,
+      "type": "door"
+    },
+    {
+      "id": "D05",
+      "from": "DORMITORIO_PRINCIPAL",
+      "to": "DORMITORIO_HIJO",
+      "wall": "right",
+      "position": 45,
+      "width": 6,
+      "type": "door"
+    },
+    {
+      "id": "D06",
+      "from": "SALA_COMEDOR",
+      "to": "COCINA",
+      "wall": "right",
+      "position": 45,
+      "width": 12,
+      "type": "open_passage"
+    },
+    {
+      "id": "D07",
+      "from": "SALA_COMEDOR",
+      "to": "PATIO",
+      "wall": "bottom",
+      "position": 70,
+      "width": 12,
+      "type": "sliding"
+    },
+    {
+      "id": "D08",
+      "from": "COCINA",
+      "to": "LAVADERO",
+      "wall": "bottom",
+      "position": 40,
+      "width": 6,
+      "type": "door"
+    },
+    {
+      "id": "D09",
+      "from": "COCINA",
+      "to": "PATIO",
+      "wall": "bottom",
+      "position": 75,
+      "width": 8,
+      "type": "door"
+    },
+    {
+      "id": "D10",
+      "from": "LAVADERO",
+      "to": "PATIO",
+      "wall": "left",
+      "position": 50,
+      "width": 6,
+      "type": "door"
+    }
+  ],
+  "windows": [
+    {
+      "id": "W01",
+      "zoneId": "SALA_COMEDOR",
+      "wall": "bottom",
+      "position": 55,
+      "width": 18,
+      "size": "large",
+      "reason": "Abrir el espacio social hacia el patio y mejorar la luz natural."
+    },
+    {
+      "id": "W02",
+      "zoneId": "COCINA",
+      "wall": "right",
+      "position": 50,
+      "width": 10,
+      "size": "medium",
+      "reason": "Dar ventilación y luz a la cocina."
+    },
+    {
+      "id": "W03",
+      "zoneId": "DORMITORIO_PRINCIPAL",
+      "wall": "bottom",
+      "position": 50,
+      "width": 12,
+      "size": "medium",
+      "reason": "Aportar iluminación natural al dormitorio principal."
+    },
+    {
+      "id": "W04",
+      "zoneId": "DORMITORIO_HIJO",
+      "wall": "bottom",
+      "position": 50,
+      "width": 10,
+      "size": "medium",
+      "reason": "Aportar iluminación natural al dormitorio del hijo."
+    },
+    {
+      "id": "W05",
+      "zoneId": "BANO",
+      "wall": "top",
+      "position": 50,
+      "width": 6,
+      "size": "small",
+      "reason": "Permitir ventilación natural del baño."
+    }
+  ],
+  "adjacencies": [
+    {
+      "from": "ACCESO",
+      "to": "SALA_COMEDOR",
+      "reason": "Entrada directa al área social.",
+      "connectionType": "door",
+      "adjacencyStrength": "hard"
+    },
+    {
+      "from": "ACCESO",
+      "to": "DISTRIBUIDOR",
+      "reason": "Conexión hacia el sector privado.",
+      "connectionType": "door",
+      "adjacencyStrength": "soft"
+    },
+    {
+      "from": "SALA_COMEDOR",
+      "to": "COCINA",
+      "reason": "Cocina integrada al comedor.",
+      "connectionType": "door",
+      "adjacencyStrength": "hard"
+    },
+    {
+      "from": "SALA_COMEDOR",
+      "to": "PATIO",
+      "reason": "Expansión del área social al exterior.",
+      "connectionType": "door",
+      "adjacencyStrength": "hard"
+    },
+    {
+      "from": "COCINA",
+      "to": "PATIO",
+      "reason": "Relación funcional con parrilla.",
+      "connectionType": "door",
+      "adjacencyStrength": "hard"
+    },
+    {
+      "from": "COCINA",
+      "to": "LAVADERO",
+      "reason": "Núcleo de servicio compacto.",
+      "connectionType": "door",
+      "adjacencyStrength": "hard"
+    },
+    {
+      "from": "LAVADERO",
+      "to": "PATIO",
+      "reason": "Salida útil para tareas de servicio.",
+      "connectionType": "door",
+      "adjacencyStrength": "soft"
+    },
+    {
+      "from": "DISTRIBUIDOR",
+      "to": "BANO",
+      "reason": "Baño accesible desde circulación.",
+      "connectionType": "door",
+      "adjacencyStrength": "hard"
+    },
+    {
+      "from": "DISTRIBUIDOR",
+      "to": "DORMITORIO_PRINCIPAL",
+      "reason": "Acceso al sector privado.",
+      "connectionType": "door",
+      "adjacencyStrength": "hard"
+    },
+    {
+      "from": "DORMITORIO_PRINCIPAL",
+      "to": "DORMITORIO_HIJO",
+      "reason": "Dormitorios agrupados en ala privada.",
+      "connectionType": "shared_wall",
+      "adjacencyStrength": "hard"
+    }
+  ],
+  "circulation": [
+    {
+      "from": "ACCESO",
+      "to": "SALA_COMEDOR",
+      "type": "primary",
+      "reason": "Ingreso principal al área social."
+    },
+    {
+      "from": "SALA_COMEDOR",
+      "to": "COCINA",
+      "type": "primary",
+      "reason": "Uso cotidiano entre comedor y cocina."
+    },
+    {
+      "from": "SALA_COMEDOR",
+      "to": "PATIO",
+      "type": "primary",
+      "reason": "Relación principal interior-exterior."
+    },
+    {
+      "from": "ACCESO",
+      "to": "DISTRIBUIDOR",
+      "type": "secondary",
+      "reason": "Acceso al sector privado."
+    },
+    {
+      "from": "DISTRIBUIDOR",
+      "to": "BANO",
+      "type": "secondary",
+      "reason": "Acceso funcional al baño."
+    },
+    {
+      "from": "DISTRIBUIDOR",
+      "to": "DORMITORIO_PRINCIPAL",
+      "type": "secondary",
+      "reason": "Acceso al dormitorio principal."
+    }
+  ],
+  "validationNotes": {
+    "strengths": [
+      "Zonificación clara entre área social, privada, servicio y exterior.",
+      "Cocina, sala-comedor y patio tienen buena relación funcional.",
+      "El patio funciona como expansión del área social.",
+      "La planta es compacta y fácil de dibujar en SVG o Canvas."
+    ],
+    "risks": [
+      "El dormitorio del hijo queda conectado desde el dormitorio principal en esta versión, lo cual no sería ideal en una vivienda real.",
+      "La ubicación del baño debe revisarse para asegurar ventilación y privacidad.",
+      "El patio ocupa una porción importante del esquema y puede requerir ajuste según el lote real."
+    ],
+    "needsArchitectReview": [
+      "Circulación independiente hacia todos los dormitorios.",
+      "Relación real con orientación solar.",
+      "Ajuste de proporciones y medidas reales.",
+      "Normativas locales, retiros y superficies permitidas."
+    ]
+  },
+  "explanation": "Esta planta esquemática propone una casa compacta organizada en cuatro sectores: acceso y circulación, área social integrada, ala privada y patio con parrilla. La sala-comedor se conecta con la cocina y el patio para favorecer una vida cotidiana fluida y con buena luz natural. Los dormitorios se agrupan en una zona más privada, mientras que el lavadero queda próximo a la cocina y al patio.",
+  "architectQuestions": [
+    "¿Cuál es la orientación real del lote?",
+    "¿El patio debe priorizar parrilla, jardín, pileta o expansión social?",
+    "¿Se necesita acceso independiente a cada dormitorio?",
+    "¿La cocina debería estar más integrada o parcialmente separada?",
+    "¿Se contempla crecimiento futuro de la vivienda?"
+  ],
+  "limitations": [
+    "Es un esquema conceptual sin medidas reales.",
+    "No es documentación técnica ni constructiva.",
+    "No reemplaza el anteproyecto de un arquitecto.",
+    "No contempla estructura, instalaciones, normativa ni permisos."
+  ]
+}

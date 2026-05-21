@@ -1,0 +1,108 @@
+{
+  "title": "Vivienda Compacta Familiar (Pareja e Hijo)",
+  "globalConfig": {
+    "targetTotalAreaM2": 70.0,
+    "allowanceFactor": 1.15,
+    "notes": "El factor de tolerancia (1.15) le da al algoritmo un 15% de margen para pasillos y desvíos geométricos."
+  },
+  "programmaticZones": [
+    {
+      "id": "ACCESO",
+      "label": "Acceso / Porche",
+      "type": "circulation",
+      "priority": 1,
+      "minAreaM2": 3.0,
+      "idealAreaM2": 4.0,
+      "aspectRatioRange": [1.0, 2.0],
+      "exteriorAnchor": "front"
+    },
+    {
+      "id": "SALA_COMEDOR",
+      "label": "Estar y Comedor",
+      "type": "social",
+      "priority": 1,
+      "minAreaM2": 18.0,
+      "idealAreaM2": 22.0,
+      "aspectRatioRange": [1.2, 1.8],
+      "exteriorAnchor": "any"
+    },
+    {
+      "id": "COCINA",
+      "label": "Cocina Integrada",
+      "type": "service",
+      "priority": 1,
+      "minAreaM2": 6.0,
+      "idealAreaM2": 8.0,
+      "aspectRatioRange": [1.0, 2.5],
+      "exteriorAnchor": "any"
+    },
+    {
+      "id": "DISTRIBUIDOR",
+      "label": "Pasillo Íntimo",
+      "type": "circulation",
+      "priority": 2,
+      "minAreaM2": 4.0,
+      "idealAreaM2": 6.0,
+      "aspectRatioRange": [1.5, 4.0],
+      "exteriorAnchor": "none"
+    },
+    {
+      "id": "DORMITORIO_PRINCIPAL",
+      "label": "Dormitorio Principal",
+      "type": "private",
+      "priority": 1,
+      "minAreaM2": 10.0,
+      "idealAreaM2": 12.0,
+      "aspectRatioRange": [1.0, 1.4],
+      "exteriorAnchor": "back"
+    },
+    {
+      "id": "DORMITORIO_HIJO",
+      "label": "Dormitorio Infantil",
+      "type": "private",
+      "priority": 1,
+      "minAreaM2": 8.5,
+      "idealAreaM2": 10.0,
+      "aspectRatioRange": [1.0, 1.3],
+      "exteriorAnchor": "any"
+    },
+    {
+      "id": "BANO_COMPLETO",
+      "label": "Baño General",
+      "type": "service",
+      "priority": 1,
+      "minAreaM2": 4.0,
+      "idealAreaM2": 4.5,
+      "aspectRatioRange": [1.2, 1.6],
+      "exteriorAnchor": "any"
+    },
+    {
+      "id": "PATIO_PARRILLA",
+      "label": "Patio con Parrilla",
+      "type": "outdoor",
+      "priority": 2,
+      "minAreaM2": 15.0,
+      "idealAreaM2": 25.0,
+      "aspectRatioRange": [1.0, 1.5],
+      "exteriorAnchor": "back"
+    }
+  ],
+  "topologyGraph": [
+    { "from": "ACCESO", "to": "SALA_COMEDOR", "relation": "direct_access", "strength": "critical" },
+    { "from": "SALA_COMEDOR", "to": "COCINA", "relation": "open_concept", "strength": "strong" },
+    { "from": "SALA_COMEDOR", "to": "DISTRIBUIDOR", "relation": "transition_door", "strength": "strong" },
+    { "from": "DISTRIBUIDOR", "to": "DORMITORIO_PRINCIPAL", "relation": "private_door", "strength": "critical" },
+    { "from": "DISTRIBUIDOR", "to": "DORMITORIO_HIJO", "relation": "private_door", "strength": "critical" },
+    { "from": "DISTRIBUIDOR", "to": "BANO_COMPLETO", "relation": "service_door", "strength": "critical" },
+    { "from": "SALA_COMEDOR", "to": "PATIO_PARRILLA", "relation": "visual_and_physical", "strength": "strong" },
+    { "from": "COCINA", "to": "PATIO_PARRILLA", "relation": "service_flow", "strength": "medium" }
+  ],
+  "architecturalRules": {
+    "acousticBarriers": [
+      { "isolate": "DORMITORIO_PRINCIPAL", "from": "SALA_COMEDOR", "preferredBuffer": "BANO_COMPLETO" }
+    ],
+    "wetZonesClustering": [
+      { "group": "wet_block_01", "elements": ["COCINA", "BANO_COMPLETO"] }
+    ]
+  }
+}

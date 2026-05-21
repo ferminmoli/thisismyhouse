@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Arc POC — Procedural Conceptual Plan Generator
 
-## Getting Started
+Spike del [poc-plan-generator.md](../poc-plan-generator.md): lenguaje natural → **programa espacial** (Gemini) → **layout procedural** (treemap + restricciones) → **Canvas CAD**.
 
-First, run the development server:
+**No es el producto.** Prueba si un usuario puede obtener un boceto útil para hablar con un arquitecto.
+
+## Requisitos
+
+- Node 20+
+- API key de [Google AI Studio](https://aistudio.google.com/apikey)
+
+## Setup
 
 ```bash
+cd arc/poc
+cp .env.example .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Arquitectura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```text
+User prompt
+    ↓
+Gemini → JSON constraint (idealArea + adjacencies, SIN coordenadas)
+    ↓
+ConstraintLayoutEngine
+    squarified treemap → relajación → aspect ratio → puertas auto
+    ↓
+FloorPlan 0–100 → Canvas (texturas, muros, cotas, muebles)
+```
 
-## Learn More
+### Formato constraint (`layoutVersion: "constraint"`)
 
-To learn more about Next.js, take a look at the following resources:
+```json
+{
+  "layoutVersion": "constraint",
+  "lot": { "width": 100, "height": 100 },
+  "zones": [
+    {
+      "id": "SALA_COMEDOR",
+      "type": "social",
+      "idealArea": 1850,
+      "aspectRatioRange": [0.9, 2.4]
+    }
+  ],
+  "adjacencies": [
+    { "from": "SALA_COMEDOR", "to": "PATIO", "type": "door_connection" }
+  ]
+}
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Ver `src/fixtures/sample-constraint-plan.json`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Flujo principal (onboarding → plano)
 
-## Deploy on Vercel
+```text
+Onboarding (brief + room counts)
+    ↓
+Gemini → ArchitecturalProgram (zonas + topologyGraph, SIN x/y)
+    ↓
+selectArchitecturalTemplate → mapProgramToTemplate
+    ↓
+Slots curados (x/y/w/h fijos) → Canvas CAD
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Plantillas en `src/lib/architectural-templates/`. Caso L 3 dorm: `l_shape_family_3bed`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Motor grilla/treemap solo con `USE_EXPERIMENTAL_GRID_ENGINE=true`.
+
+### Módulos clave
+
+| Ruta | Rol |
+|------|-----|
+| `src/lib/architectural-templates/` | Plantillas + mapeo + validación ligera |
+| `src/lib/floorplan-layout/` | Orquestación layout (template por defecto) |
+| `src/lib/layout-engine/` | Motor experimental (treemap) |
+| `src/lib/process-constraint-plan.ts` | Constraint → FloorPlan |
+| `src/hooks/useProceduralLayout.ts` | Hook React |
+| `src/lib/canvas-renderer/` | Render CAD Canvas 2D |
+| `src/lib/import-plan.ts` | Auto-detecta constraint vs legacy JSON |
+
+### Modo sin API
+
+Con `GEMINI_USE_MOCK=true` (o sin `GEMINI_API_KEY`) el programa se genera localmente desde el onboarding.
+
+## Variables de entorno
+
+- `GEMINI_API_KEY` — solo servidor
+- `GEMINI_MODEL` — opcional (default: cadena 2.5-flash → flash-lite)
+- `USE_EXPERIMENTAL_GRID_ENGINE` — `true` para grilla L / treemap; default plantillas
+
+## Stack
+
+Next.js · TypeScript · Zod · Gemini · Canvas 2D
