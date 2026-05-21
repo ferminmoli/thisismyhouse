@@ -8,9 +8,7 @@
  * - Prompt 4 crítica → fetchCandidateCritic (generate-variations)
  * - Prompt 5 reparación → fetchRepairInstructions (variaciones fallidas)
  * - Prompt 6 explicación → fetchUserExplanation (/api/user-explanation)
- *
- * Pendiente / dev:
- * - Prompt 7 quality-calibration (offline)
+ * - Prompt 7 calibración → fetchQualityCalibration (debug-pipeline / offline)
  */
 
 export {
@@ -80,6 +78,14 @@ export {
   qualityCalibrationSystemInstruction,
   buildQualityCalibrationPrompt,
 } from "./quality-calibration";
+
+export {
+  qualityCalibrationOutputSchema,
+  type QualityCalibrationOutput,
+} from "./quality-calibration-types";
+
+export { buildQualityCalibrationPayload } from "./build-calibration-payload";
+export { fetchQualityCalibration } from "./fetch-quality-calibration";
 
 export {
   structuredBriefFromPreferences,

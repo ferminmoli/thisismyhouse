@@ -71,6 +71,17 @@ export async function POST(request: NextRequest) {
     maxOptions: body.maxOptions ?? 5,
   });
 
+  if (result.variations.length === 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "No se generó ninguna opción válida. Revisá el programa o las plantillas.",
+      },
+      { status: 422 },
+    );
+  }
+
   return NextResponse.json({
     ok: true,
     variations: serializeVariations(result.variations),

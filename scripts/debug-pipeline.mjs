@@ -38,7 +38,7 @@ async function main() {
   const res = await fetch(`${base}/api/debug-pipeline`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userPreferences }),
+    body: JSON.stringify({ userPreferences, fullSuite: true }),
   });
 
   const data = await res.json();
@@ -78,6 +78,26 @@ async function main() {
   );
   console.log("  program warnings:", data.programWarnings?.join("; ") || "(ninguna)");
   console.log("  layout fill:", ((data.layout?.fillRatio ?? 0) * 100).toFixed(1) + "%");
+  console.log("  layout validation:", data.layout?.validationOk ? "OK" : "FAIL");
+
+  if (data.variations?.length) {
+    console.log("\n── Variaciones ──");
+    for (const v of data.variations) {
+      console.log(
+        `  ${v.optionId} ${v.label ?? ""} score ${(v.compositeScore * 100).toFixed(0)}% validation ${v.validationOk ? "OK" : "FAIL"}`,
+      );
+      if (v.warnings?.length) console.log("    ", v.warnings.join("; "));
+    }
+  }
+
+  if (data.calibrations?.length) {
+    console.log("\n── Prompt 7 calibración ──");
+    for (const c of data.calibrations) {
+      console.log(
+        `  ${c.optionId}: ${c.scoreCalibration} mustReject=${c.mustReject}`,
+      );
+    }
+  }
   console.log("  layout warnings:", data.layout?.warnings?.join("; ") || "(ninguna)");
   if (data.layout?.placed) {
     console.log("  placed rects:");

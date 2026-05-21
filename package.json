@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "debug:pipeline": "node scripts/debug-pipeline.mjs"
+    "debug:pipeline": "node scripts/debug-pipeline.mjs",
+    "validate:templates": "npx tsx scripts/validate-templates.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

@@ -85,8 +85,9 @@ export function validateProgramSemantics(
       for (let j = i + 1; j < privateZones.length; j++) {
         const direct = program.topologyGraph.some(
           (e) =>
-            (e.from === privateZones[i].id && e.to === privateZones[j].id) ||
-            (e.from === privateZones[j].id && e.to === privateZones[i].id),
+            e.relation !== "avoid_direct" &&
+            ((e.from === privateZones[i].id && e.to === privateZones[j].id) ||
+              (e.from === privateZones[j].id && e.to === privateZones[i].id)),
         );
         if (direct) {
           hints.push(

@@ -94,7 +94,7 @@ function compileCandidate(
   });
   const scores = scoreFloorplanLayout(layout, program);
   const failures = collectValidationFailures(scores, layout);
-  const passedGate = passesQualityGate(scores);
+  const passedGate = passesQualityGate(scores, layout);
 
   return {
     scores,
@@ -296,15 +296,28 @@ export function generateLayoutVariationsFromStrategies(
   }
 
   if (results.length === 0 && strategies[0]) {
-    const fallback = buildVariation(
-      "A",
+    const variantId = templateVariantFromStrategyId(strategies[0].id);
+    const compiled = compileCandidate(
       strategies[0],
       input.program,
       input.planShape,
       input.preferences,
       1,
+      variantId,
     );
-    if (fallback) results.push(fallback);
+    const emergency = toVariation(
+      "A",
+      strategies[0],
+      compiled,
+      variantId,
+      false,
+    );
+    if (emergency) {
+      results.push({
+        ...emergency,
+        description: `${emergency.description} (modo recuperación)`,
+      });
+    }
   }
 
   return results.sort(

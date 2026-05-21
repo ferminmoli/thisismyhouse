@@ -138,6 +138,14 @@ export function scoreFloorplanLayout(
   };
 }
 
-export function passesQualityGate(scores: PlanQualityScores): boolean {
+export function passesQualityGate(
+  scores: PlanQualityScores,
+  layout?: FloorplanLayoutResult,
+): boolean {
+  const validationOk = layout?.templateMeta?.validation?.ok !== false;
+  const hasOverlapWarnings = (layout?.warnings ?? []).some((w) =>
+    w.startsWith("Solape:"),
+  );
+  if (!validationOk || hasOverlapWarnings) return false;
   return scores.compositeScore >= MIN_QUALITY && scores.realismScore >= 0.4;
 }
