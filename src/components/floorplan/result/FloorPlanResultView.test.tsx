@@ -13,6 +13,7 @@ vi.mock("@/lib/floorplan-result/featureFlags", () => ({
   shouldShowFloorPlanDebug: vi.fn(() => false),
   isWallGraphDebugEnabled: vi.fn(() => false),
   canUseWallGraphDebug: vi.fn(() => false),
+  isArcadaPocTabEnabled: vi.fn(() => false),
 }));
 
 vi.mock("@/lib/architecture/finalPlanRenderer", async (importOriginal) => {
@@ -50,12 +51,14 @@ vi.mock("@/lib/architecture/svgRenderer", async (importOriginal) => {
 });
 
 import {
+  isArcadaPocTabEnabled,
   isWallGraphDebugEnabled,
   shouldShowFloorPlanDebug,
 } from "@/lib/floorplan-result/featureFlags";
 
 const mockShouldShowDebug = vi.mocked(shouldShowFloorPlanDebug);
 const mockWallGraphDebug = vi.mocked(isWallGraphDebugEnabled);
+const mockArcadaTab = vi.mocked(isArcadaPocTabEnabled);
 const mockRenderFinalPlanToSvg = vi.mocked(renderFinalPlanToSvg);
 
 const LAUNDRY_ID = "add_laundry_as_kitchen_extension";
@@ -96,6 +99,7 @@ describe("FloorPlanResultView", () => {
     mockRenderFinalPlanToSvg.mockClear();
     mockShouldShowDebug.mockReturnValue(false);
     mockWallGraphDebug.mockReturnValue(false);
+    mockArcadaTab.mockReturnValue(false);
   });
 
   it("shows recommended variant as hero and passes plan to final renderer", () => {
@@ -216,5 +220,42 @@ describe("FloorPlanResultView", () => {
   it("shows final plan disclaimer", () => {
     render(<FloorPlanResultView result={buildPresented()} />);
     expect(screen.getAllByText(/no apto para obra|validación profesional/i).length).toBeGreaterThan(0);
+  });
+
+  it("hides Arcada POC tab for normal users", () => {
+    mockArcadaTab.mockReturnValue(false);
+    render(<FloorPlanResultView result={buildPresented()} />);
+    expect(screen.queryByTestId("plan-renderer-tabs")).toBeNull();
+    expect(screen.getByTestId("final-plan-renderer")).toBeTruthy();
+    expect(screen.queryByTestId("arcada-poc-renderer")).toBeNull();
+  });
+
+  it("shows Arcada POC tab in dev mode and switches renderers", () => {
+    mockArcadaTab.mockReturnValue(true);
+    render(<FloorPlanResultView result={buildPresented()} isDev />);
+    expect(screen.getByTestId("plan-renderer-tabs")).toBeTruthy();
+    expect(screen.getByTestId("final-plan-renderer")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("plan-tab-arcada"));
+    expect(screen.getByTestId("arcada-poc-renderer")).toBeTruthy();
+    expect(screen.queryByTestId("final-plan-renderer")).toBeNull();
+    fireEvent.click(screen.getByTestId("plan-tab-actual"));
+    expect(screen.getByTestId("final-plan-renderer")).toBeTruthy();
+  });
+
+  it("updates Arcada renderer when variant changes", () => {
+    mockArcadaTab.mockReturnValue(true);
+    render(<FloorPlanResultView result={buildPresented()} isDev />);
+    fireEvent.click(screen.getByTestId("plan-tab-arcada"));
+    const kitchenTabs = screen.getAllByRole("tab", {
+      name: /Cocina más integrada/i,
+    });
+    fireEvent.click(kitchenTabs[0]!);
+    expect(screen.getByTestId("arcada-poc-renderer")).toBeTruthy();
+    expect(
+      screen.getByLabelText(/Plano Arcada POC: Cocina más integrada/i),
+    ).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
+      "Plano seleccionado",
+    );
   });
 });

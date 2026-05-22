@@ -16,7 +16,10 @@ type Props = {
   variantId: string;
 };
 
-/** Debug/conceptual SVG path — caption, legend, pastel diagram style. */
+/**
+ * Legacy debug/conceptual SVG path (svgRenderer — colorful diagram).
+ * Public UI uses FinalPlanRenderer → final-plan/* (monochrome architectural).
+ */
 export function FloorPlanSvgRenderer({
   plan,
   title,

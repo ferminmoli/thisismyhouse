@@ -1,46 +1,40 @@
 import { ARCH } from "./architecturalPalette";
 import type { PlanRoom } from "./types";
 
-/** Monochrome fills + one stroke per zone (public path — no wall graph). */
-const FILLS = {
-  covered: ARCH.fillCovered,
-  outdoor: ARCH.fillOutdoor,
-  semi_outdoor: ARCH.fillSemi,
-} as const;
-
 const BOUNDARY = {
   perimeter: { stroke: ARCH.wallExterior, width: ARCH.wallExteriorWidth },
   interior: { stroke: ARCH.wallInterior, width: ARCH.wallInteriorWidth },
-  outdoor: { stroke: ARCH.inkSoft, width: 0.34, dash: ' stroke-dasharray="2.4 1.2"' },
-  semi: { stroke: ARCH.inkSoft, width: 0.3, dash: ' stroke-dasharray="1.6 1"' },
+  outdoor: {
+    stroke: ARCH.wallOutdoor,
+    width: ARCH.wallOutdoorWidth,
+    dash: ' stroke-dasharray="2.8 1.4"',
+  },
+  semi: {
+    stroke: ARCH.wallOutdoor,
+    width: ARCH.wallOutdoorWidth * 0.9,
+    dash: ' stroke-dasharray="2 1.2"',
+  },
 } as const;
 
 export type SimpleRoomBoundaryOptions = {
-  /** When wall-graph debug is on, omit zone strokes to avoid doubling. */
   includeStroke?: boolean;
 };
 
 function wetPattern(room: PlanRoom): string | null {
-  switch (room.wetKind) {
-    case "bathroom":
-      return "arch-pat-bath";
-    case "kitchen":
-      return "arch-pat-kitchen";
-    case "laundry":
-      return "arch-pat-laundry";
-    default:
-      return null;
-  }
+  if (room.wetKind === "bathroom") return "arch-pat-bath";
+  if (room.wetKind === "laundry") return "arch-pat-laundry";
+  return null;
 }
 
 function roomFill(room: PlanRoom): { fill: string; pattern: string | null } {
   if (room.enclosure === "outdoor") {
-    return { fill: FILLS.outdoor, pattern: "arch-pat-outdoor" };
+    return { fill: ARCH.fillOutdoor, pattern: "arch-pat-outdoor" };
   }
   if (room.enclosure === "semi_covered") {
-    return { fill: FILLS.semi_outdoor, pattern: "arch-pat-outdoor" };
+    return { fill: ARCH.fillSemi, pattern: "arch-pat-outdoor" };
   }
-  return { fill: FILLS.covered, pattern: wetPattern(room) };
+  const pattern = wetPattern(room);
+  return { fill: ARCH.fillRoom, pattern };
 }
 
 function roomStroke(room: PlanRoom, includeStroke: boolean) {
@@ -64,7 +58,7 @@ function roomStroke(room: PlanRoom, includeStroke: boolean) {
   return { stroke: b.stroke, strokeWidth: b.width, dash: "" };
 }
 
-/** Public SimpleRoomBoundaryLayer — fill + optional boundary stroke per zone. */
+/** Fills (opaque) then strokes — clean interiors, clear wall hierarchy. */
 export function renderSimpleRoomBoundaries(
   rooms: PlanRoom[],
   options: SimpleRoomBoundaryOptions = {},
@@ -75,15 +69,29 @@ export function renderSimpleRoomBoundaries(
     return order[a.enclosure] - order[b.enclosure];
   });
 
-  return sorted
+  const fills = sorted
     .map((room) => {
       const { fill, pattern } = roomFill(room);
-      const { stroke, strokeWidth, dash } = roomStroke(room, includeStroke);
       const fillAttr = pattern ? ` fill="url(#${pattern})"` : ` fill="${fill}"`;
       return (
         `<rect x="${room.x}" y="${room.y}" width="${room.width}" height="${room.height}"` +
-        `${fillAttr} stroke="${stroke}" stroke-width="${strokeWidth}"${dash}/>`
+        `${fillAttr} stroke="none"/>`
       );
     })
     .join("");
+
+  if (!includeStroke) return fills;
+
+  const strokes = sorted
+    .map((room) => {
+      const { stroke, strokeWidth, dash } = roomStroke(room, true);
+      return (
+        `<rect x="${room.x}" y="${room.y}" width="${room.width}" height="${room.height}"` +
+        ` fill="none" stroke="${stroke}" stroke-width="${strokeWidth}"` +
+        ` stroke-linecap="square" stroke-linejoin="miter"${dash}/>`
+      );
+    })
+    .join("");
+
+  return fills + strokes;
 }

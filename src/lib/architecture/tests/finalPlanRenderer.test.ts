@@ -77,8 +77,10 @@ describe("renderFinalPlanToSvg", () => {
     expect(render.svg).toContain("Escala conceptual / S.E.");
     expect(render.svg).toContain("No apto para obra");
     expect(render.svg).toContain("Sin validez municipal");
+    expect(render.svg).toContain('id="drafting-background"');
     expect(render.svg).not.toContain('id="architectural-walls"');
     expect(render.svg).not.toContain('id="walls"');
+    expect(render.svg).not.toContain('id="legend"');
     expect(render.svg).not.toContain("mutation");
     expect(render.svg).not.toContain("adjacencyScore");
   });
@@ -129,9 +131,9 @@ describe("renderFinalPlanToSvg", () => {
     const render = renderArchitecturalPlanSvg(model);
     const zoneGroup =
       render.svg.match(/<g id="simple-room-boundaries">([\s\S]*?)<\/g>/)?.[1] ?? "";
-    const zoneRects = zoneGroup.match(/<rect x="/g) ?? [];
-    expect(zoneRects.length).toBe(model.rooms.length);
-    expect(zoneGroup).toMatch(/stroke-width="0\.(42|92)"/);
+    expect(zoneGroup).toContain('fill="#FFFFFF" stroke="none"');
+    expect(zoneGroup).toMatch(/fill="url\(#arch-pat-outdoor\)"/);
+    expect(zoneGroup).toMatch(/stroke-width="1\.02"/);
   });
 
   it("shows north arrow when orientation unknown", () => {
@@ -199,7 +201,7 @@ describe("renderFinalPlanToSvg", () => {
       plan,
     });
     expect(render.svg).toContain("window-opening");
-    expect(render.svg).toContain('stroke="#5B7C9A"');
+    expect(render.svg).toContain('stroke="#6B8CAE"');
   });
 
   it("renders open_passage to patio as wide sliding opening", () => {

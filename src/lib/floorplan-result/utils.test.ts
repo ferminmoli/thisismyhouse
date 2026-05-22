@@ -6,6 +6,7 @@ import {
 } from "./utils";
 import {
   canUseWallGraphDebug,
+  isArcadaPocTabEnabled,
   isWallGraphDebugEnabled,
   shouldShowFloorPlanDebug,
 } from "./featureFlags";
@@ -65,5 +66,68 @@ describe("wallGraphDebug", () => {
       isWallGraphDebugEnabled({ isDev: true, wallGraphDebug: true }),
     ).toBe(true);
     expect(canUseWallGraphDebug({ isAdmin: true })).toBe(true);
+  });
+});
+
+describe("isArcadaPocTabEnabled", () => {
+  it("is off in production for normal users", () => {
+    const prevEnv = process.env.NODE_ENV;
+    const prevFlag = process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC;
+    process.env.NODE_ENV = "production";
+    delete process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC;
+    expect(isArcadaPocTabEnabled({ isAdmin: false, isDev: false })).toBe(
+      false,
+    );
+    process.env.NODE_ENV = prevEnv;
+    if (prevFlag !== undefined) {
+      process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC = prevFlag;
+    }
+  });
+
+  it("is on in local development without passing isDev", () => {
+    const prevEnv = process.env.NODE_ENV;
+    const prevFlag = process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC;
+    process.env.NODE_ENV = "development";
+    delete process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC;
+    expect(isArcadaPocTabEnabled()).toBe(true);
+    process.env.NODE_ENV = prevEnv;
+    if (prevFlag !== undefined) {
+      process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC = prevFlag;
+    }
+  });
+
+  it("is on for dev/admin in production", () => {
+    const prevEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "production";
+    expect(isArcadaPocTabEnabled({ isDev: true })).toBe(true);
+    process.env.NODE_ENV = prevEnv;
+  });
+
+  it("respects NEXT_PUBLIC_ENABLE_ARCADA_POC=false in development", () => {
+    const prevEnv = process.env.NODE_ENV;
+    const prevFlag = process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC;
+    process.env.NODE_ENV = "development";
+    process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC = "false";
+    expect(isArcadaPocTabEnabled()).toBe(false);
+    process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) {
+      delete process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC;
+    } else {
+      process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC = prevFlag;
+    }
+  });
+
+  it("respects NEXT_PUBLIC_ENABLE_ARCADA_POC=true in production", () => {
+    const prevEnv = process.env.NODE_ENV;
+    const prevFlag = process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC;
+    process.env.NODE_ENV = "production";
+    process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC = "true";
+    expect(isArcadaPocTabEnabled()).toBe(true);
+    process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) {
+      delete process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC;
+    } else {
+      process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC = prevFlag;
+    }
   });
 });

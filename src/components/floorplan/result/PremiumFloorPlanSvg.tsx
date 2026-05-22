@@ -1,7 +1,8 @@
 "use client";
 
 /**
- * @deprecated Use FinalPlanRenderer for public UI. ConceptualPlanRenderer for debug.
+ * @deprecated Public UI: FinalPlanRenderer (monochrome planta preliminar).
+ * Debug panel: ConceptualPlanRenderer / FloorPlanSvgRenderer.
  */
 export {
   ConceptualPlanRenderer as PremiumFloorPlanSvg,

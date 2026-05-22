@@ -1,5 +1,11 @@
 import type { GeneratedPlan } from "../generatedPlan";
-import type { PlanLabel, PlanOpening, PlanRoom, PlanWindow } from "./types";
+import type {
+  PlanFurniture,
+  PlanLabel,
+  PlanOpening,
+  PlanRoom,
+  PlanWindow,
+} from "./types";
 import { formatAreaM2 } from "./planGeometryUtils";
 
 type Obstacle = { x1: number; y1: number; x2: number; y2: number };
@@ -38,6 +44,15 @@ function windowObstacles(windows: PlanWindow[]): Obstacle[] {
   }));
 }
 
+function furnitureObstacles(furniture: PlanFurniture[]): Obstacle[] {
+  return furniture.map((f) => ({
+    x1: f.x - 0.25,
+    y1: f.y - 0.25,
+    x2: f.x + f.width + 0.25,
+    y2: f.y + f.height + 0.25,
+  }));
+}
+
 function labelSizes(room: PlanRoom): {
   nameSize: number;
   areaSize: number;
@@ -52,13 +67,13 @@ function labelSizes(room: PlanRoom): {
   const callout = minDim < 3.6;
   const compact = minDim < 6;
   const nameSize = callout
-    ? Math.max(0.9, Math.min(1.1, minDim * 0.28))
+    ? Math.max(0.76, Math.min(0.9, minDim * 0.22))
     : compact
-      ? Math.max(1, Math.min(1.35, minDim * 0.12))
-      : Math.max(1.08, Math.min(1.52, minDim * 0.075));
-  const areaSize = Math.max(0.8, Math.min(1.15, nameSize * 0.68));
+      ? Math.max(0.8, Math.min(1.05, minDim * 0.09))
+      : Math.max(0.86, Math.min(1.18, minDim * 0.058));
+  const areaSize = Math.max(0.65, Math.min(0.88, nameSize * 0.58));
   const showArea =
-    room.areaM2 != null && minDim >= (callout ? 4 : 5);
+    room.areaM2 != null && minDim >= (callout ? 4.4 : 5.8);
 
   return { nameSize, areaSize, showArea, callout };
 }
@@ -68,8 +83,13 @@ export function buildRoomLabels(
   openings: PlanOpening[],
   windows: PlanWindow[],
   _plan: GeneratedPlan,
+  furniture: PlanFurniture[] = [],
 ): PlanLabel[] {
-  const obstacles = [...openingObstacles(openings), ...windowObstacles(windows)];
+  const obstacles = [
+    ...openingObstacles(openings),
+    ...windowObstacles(windows),
+    ...furnitureObstacles(furniture),
+  ];
   const placed: Obstacle[] = [];
   const labels: PlanLabel[] = [];
 

@@ -14,12 +14,15 @@ import {
   warnVariantMismatch,
 } from "@/lib/floorplan-result/selection";
 import {
+  isArcadaPocTabEnabled,
   isWallGraphDebugEnabled,
   shouldShowFloorPlanDebug,
 } from "@/lib/floorplan-result/featureFlags";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RecommendedPlanHeader } from "./RecommendedPlanHeader";
 import { FinalPlanRenderer } from "./FinalPlanRenderer";
+import { ArcadaPocRenderer } from "./ArcadaPocRenderer";
+import { PlanRendererTabs, type PlanRendererTab } from "./PlanRendererTabs";
 import { VariantSelector } from "./VariantSelector";
 import { WhyRecommended } from "./WhyRecommended";
 import { ArchitectBriefAccordion } from "./ArchitectBriefAccordion";
@@ -49,6 +52,9 @@ export function FloorPlanResultView({
   onVariantChange,
 }: FloorPlanResultViewProps) {
   const showDebug = shouldShowFloorPlanDebug({ isAdmin, isDev });
+  const arcadaTabEnabled = isArcadaPocTabEnabled({ isAdmin, isDev });
+  const [planRendererTab, setPlanRendererTab] =
+    useState<PlanRendererTab>("actual");
   const [wallGraphDebug, setWallGraphDebug] = useState(false);
   const wallGraphActive = isWallGraphDebugEnabled({
     isAdmin,
@@ -168,14 +174,31 @@ export function FloorPlanResultView({
 
       {hasPlan ? (
         <section aria-label="Plano final" className="w-full">
-          <FinalPlanRenderer
-            key={`${selectedVariant.id}-${wallGraphActive ? "wg" : "pub"}`}
-            plan={selectedVariant.plan}
-            title={publicResult.title}
-            variantLabel={selectedVariant.label}
-            variantId={selectedVariant.id}
-            wallGraphDebug={wallGraphActive}
-          />
+          {arcadaTabEnabled ? (
+            <PlanRendererTabs
+              active={planRendererTab}
+              onChange={setPlanRendererTab}
+            />
+          ) : null}
+          {planRendererTab === "arcada" && arcadaTabEnabled ? (
+            <ArcadaPocRenderer
+              key={`arcada-${selectedVariant.id}`}
+              plan={selectedVariant.plan}
+              title={publicResult.title}
+              variantLabel={selectedVariant.label}
+              variantId={selectedVariant.id}
+              devMode={showDebug}
+            />
+          ) : (
+            <FinalPlanRenderer
+              key={`${selectedVariant.id}-${wallGraphActive ? "wg" : "pub"}`}
+              plan={selectedVariant.plan}
+              title={publicResult.title}
+              variantLabel={selectedVariant.label}
+              variantId={selectedVariant.id}
+              wallGraphDebug={wallGraphActive}
+            />
+          )}
         </section>
       ) : (
         <FloorPlanResultEmptyState message="No hay geometría de planta para mostrar en esta variante." />

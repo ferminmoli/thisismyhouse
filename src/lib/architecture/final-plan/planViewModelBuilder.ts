@@ -8,7 +8,7 @@ import {
   computePlanLayout,
 } from "./planGeometryUtils";
 import { buildDimensionsFromPlan } from "./preliminaryDimensions";
-import { buildFurniture } from "./furnitureLayer";
+import { buildFurnitureWithFallback } from "./furnitureLayer";
 import { buildRoomLabels } from "./roomLabelLayer";
 
 export function buildPlanViewModel(
@@ -23,8 +23,8 @@ export function buildPlanViewModel(
   const layout = computePlanLayout(rooms);
   const showFurniture = input.showFurniture !== false;
 
-  const labels = buildRoomLabels(rooms, openings, windows, plan);
-  const furniture = buildFurniture(plan, showFurniture);
+  const furniture = buildFurnitureWithFallback(plan, rooms, showFurniture);
+  const labels = buildRoomLabels(rooms, openings, windows, plan, furniture);
 
   const est = plan.metadata.areaEstimate;
   const areasEstimated = !est || est.confidence !== "high";

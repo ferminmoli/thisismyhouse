@@ -4,7 +4,6 @@ import type { PlanLabel } from "./types";
 import { ARCH } from "./architecturalPalette";
 
 const INK = ARCH.ink;
-const MUTED = ARCH.inkMuted;
 const HALO = "#FFFFFF";
 const FONT = "Helvetica Neue, Helvetica, Arial, sans-serif";
 
@@ -28,9 +27,9 @@ function textAttrs(
 export function renderRoomLabels(labels: PlanLabel[]): string {
   return labels
     .map((lb) => {
-      const name = `<text ${textAttrs(lb.x, lb.nameY, lb.nameSize, "600", INK, "0.02")}>${escapeXml(lb.name)}</text>`;
+      const name = `<text ${textAttrs(lb.x, lb.nameY, lb.nameSize, "500", INK, "0.015")}>${escapeXml(lb.name)}</text>`;
       const area = lb.areaText
-        ? `<text ${textAttrs(lb.x, lb.areaY, lb.areaSize, "400", MUTED)}>${escapeXml(lb.areaText)}</text>`
+        ? `<text ${textAttrs(lb.x, lb.areaY, lb.areaSize, "400", ARCH.inkSoft)}>${escapeXml(lb.areaText)}</text>`
         : "";
       return `<g class="room-label" pointer-events="none">${name}${area}</g>`;
     })

@@ -68,24 +68,24 @@ export function renderTitleBlock(sheet: SheetMeta): string {
     `<line x1="${x0}" y1="${tbY + 0.4}" x2="${x0 + w}" y2="${tbY + 0.4}" stroke="${ARCH.rule}" stroke-width="0.1"/>` +
     `<line x1="${splitX}" y1="${tbY + 1}" x2="${splitX}" y2="${tbY + SHEET.titleBlockH - 0.6}" stroke="${ARCH.rule}" stroke-width="0.05" opacity="0.5"/>` +
     projectLine +
-    `<text x="${x0 + 0.15}" y="${yTitle}" font-size="1.14" font-family="Georgia, 'Times New Roman', serif" font-weight="600" letter-spacing="0.02" fill="${ARCH.ink}">Planta preliminar</text>` +
-    `<text x="${x0 + 0.15}" y="${yVariant}" font-size="0.9" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.ink}">${escapeXml(sheet.variantLabel)}</text>` +
+    `<text x="${x0 + 0.15}" y="${yTitle}" font-size="1.28" font-family="Georgia, 'Times New Roman', serif" font-weight="700" letter-spacing="0.03" fill="${ARCH.ink}">Planta preliminar</text>` +
+    `<text x="${x0 + 0.15}" y="${yVariant}" font-size="0.82" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkMuted}">${escapeXml(sheet.variantLabel)}</text>` +
     (areaLines[0]
-      ? `<text x="${x0 + 0.15}" y="${yArea1}" font-size="0.74" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkMuted}">${escapeXml(areaLines[0])}</text>`
+      ? `<text x="${x0 + 0.15}" y="${yArea1}" font-size="0.68" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">${escapeXml(areaLines[0])}</text>`
       : "") +
     (areaLines[1]
-      ? `<text x="${x0 + 0.15}" y="${yArea2}" font-size="0.74" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkMuted}">${escapeXml(areaLines[1])}</text>`
+      ? `<text x="${x0 + 0.15}" y="${yArea2}" font-size="0.68" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">${escapeXml(areaLines[1])}</text>`
       : "") +
     (areaLines[2]
-      ? `<text x="${x0 + 0.15}" y="${tbY + 9.9}" font-size="0.74" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkMuted}">${escapeXml(areaLines[2])}</text>`
+      ? `<text x="${x0 + 0.15}" y="${tbY + 9.9}" font-size="0.68" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">${escapeXml(areaLines[2])}</text>`
       : "") +
-    `<text x="${rightX - 0.15}" y="${yScale}" text-anchor="end" font-size="0.74" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkMuted}">Escala conceptual / S.E.</text>` +
+    `<text x="${rightX - 0.15}" y="${yScale}" text-anchor="end" font-size="0.68" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkMuted}">Escala conceptual / S.E.</text>` +
     (sheet.showPreliminaryDimensions
-      ? `<text x="${rightX - 0.15}" y="${yDims}" text-anchor="end" font-size="0.68" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">Medidas preliminares estimadas</text>`
+      ? `<text x="${rightX - 0.15}" y="${yDims}" text-anchor="end" font-size="0.64" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">Medidas preliminares estimadas</text>`
       : "") +
-    `<text x="${rightX - 0.15}" y="${yLegal1}" text-anchor="end" font-size="0.68" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">No apto para obra</text>` +
-    `<text x="${rightX - 0.15}" y="${yLegal2}" text-anchor="end" font-size="0.66" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">Sin validez municipal</text>` +
-    `<text x="${rightX - 0.15}" y="${yLegal3}" text-anchor="end" font-size="0.66" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">Revisión profesional requerida</text>` +
+    `<text x="${rightX - 0.15}" y="${yLegal1}" text-anchor="end" font-size="0.64" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">No apto para obra</text>` +
+    `<text x="${rightX - 0.15}" y="${yLegal2}" text-anchor="end" font-size="0.62" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">Sin validez municipal</text>` +
+    `<text x="${rightX - 0.15}" y="${yLegal3}" text-anchor="end" font-size="0.62" font-family="Arial, Helvetica, sans-serif" fill="${ARCH.inkSoft}">Revisión profesional requerida</text>` +
     `</g>`
   );
 }

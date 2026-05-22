@@ -34,3 +34,18 @@ export function isWallGraphDebugEnabled(
   if (!canUseWallGraphDebug(options)) return false;
   return options.wallGraphDebug === true;
 }
+
+/**
+ * Arcada experimental renderer tab.
+ * - Off when NEXT_PUBLIC_ENABLE_ARCADA_POC=false
+ * - On when NEXT_PUBLIC_ENABLE_ARCADA_POC=true, NODE_ENV=development, or dev/admin
+ */
+export function isArcadaPocTabEnabled(
+  options: DebugVisibilityOptions = {},
+): boolean {
+  const flag = process.env.NEXT_PUBLIC_ENABLE_ARCADA_POC;
+  if (flag === "false") return false;
+  if (flag === "true") return true;
+  if (process.env.NODE_ENV === "development") return true;
+  return shouldShowFloorPlanDebug(options);
+}

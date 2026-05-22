@@ -14,6 +14,7 @@ import {
   planTransformAttr,
   SHEET,
 } from "./planGeometryUtils";
+import { renderDraftingBackground } from "./draftingBackground";
 import {
   renderOrientativeNorth,
   renderSheetFrame,
@@ -68,17 +69,18 @@ export function renderArchitecturalPlanSvg(
     `<g id="arch-plan-drawing" transform="${transform}">` +
     `<g id="simple-room-boundaries">${roomBoundaries}</g>` +
     wallLayer +
+    openingsLayer +
+    `<g id="windows">${renderWindows(model.windows)}</g>` +
     (model.showFurniture
       ? `<g id="furniture">${renderFurniture(model.furniture, furnitureZones)}</g>`
       : "") +
-    openingsLayer +
-    `<g id="windows">${renderWindows(model.windows)}</g>` +
     dimensionsLayer +
     `<g id="labels">${renderRoomLabels(model.labels)}</g>` +
     `</g>`;
 
   const chrome =
     renderSheetFrame() +
+    renderDraftingBackground(layout) +
     (model.showOrientativeNorth ? renderOrientativeNorth(layout) : "") +
     renderTitleBlock(model.sheet);
 

@@ -24,10 +24,10 @@ const MAX_BBOX_FILL_RATIO = 1.05;
 
 /** Offsets in plan coordinates — kept tight for readable exterior cotas. */
 const OFFSET = {
-  outerH: 1.15,
-  outerV: 1.15,
-  patioH: 0.95,
-  patioV: 0.9,
+  outerH: 1.75,
+  outerV: 1.75,
+  patioH: 1.25,
+  patioV: 1.15,
 } as const;
 
 /** Argentine decimal comma, e.g. 13,50 m */
