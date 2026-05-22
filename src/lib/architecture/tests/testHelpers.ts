@@ -7,10 +7,12 @@ import { selectArchitecturalStrategy } from "../strategySelector";
 import { generatePlanFromParti } from "../partiGenerator";
 import { validateGeneratedPlan } from "../generatedPlanValidator";
 import { runArchitecturalPipeline } from "../generationPipeline";
+import type { PipelineResult } from "../generationPipeline";
+import { runFloorPlanPipeline } from "../floorPlanPipeline";
+import type { FloorPlanPipelineResult } from "../floorPlanPipelineTypes";
 import type { GeneratedPlan, GeneratedPlanValidation, RenderZone } from "../generatedPlan";
 import type { TopologyGraph, TopologyEdge } from "../topologyGraph";
 import type { ArchitecturalStrategy } from "../strategySelector";
-import type { PipelineResult } from "../generationPipeline";
 
 export const TEST_PROMPT =
   "Casa familiar compacta de 100m2 en L, 3 dormitorios, 1 baño, cocina, living comedor y patio con buena luz.";
@@ -54,6 +56,12 @@ export async function runFullPipeline(
   options?: { debug?: boolean },
 ): Promise<PipelineResult> {
   return runArchitecturalPipeline(prompt, options);
+}
+
+export async function runFullFloorPlanPipeline(
+  prompt = TEST_PROMPT,
+): Promise<FloorPlanPipelineResult> {
+  return runFloorPlanPipeline(prompt);
 }
 
 export function getPlanFromPipeline(

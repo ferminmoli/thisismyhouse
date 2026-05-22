@@ -166,10 +166,10 @@ function toPipelineValidation(v: {
  * Pipeline (paso 5):
  * User Prompt → Program → Topology → Strategy → Parti → Validate → Mutations → Scorer
  */
-export async function runArchitecturalPipeline(
+export async function runArchitecturalPipelineInternal(
   userPrompt: string,
   options?: RunArchitecturalPipelineOptions,
-): Promise<PipelineResult> {
+): Promise<PipelineInternalResult> {
   const stages: PipelineStage[] = [];
 
   stages.push({
@@ -474,5 +474,13 @@ export async function runArchitecturalPipeline(
     };
   }
 
+  return internal;
+}
+
+export async function runArchitecturalPipeline(
+  userPrompt: string,
+  options?: RunArchitecturalPipelineOptions,
+): Promise<PipelineResult> {
+  const internal = await runArchitecturalPipelineInternal(userPrompt, options);
   return buildNormalizedPipelineResponse(internal);
 }

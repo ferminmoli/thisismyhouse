@@ -1,20 +1,12 @@
 "use client";
 
-import { FloorplanCanvas } from "@/components/floorplan/FloorplanCanvas";
 import { FloorplanLoader } from "@/components/floorplan/FloorplanLoader";
-import { FloorplanSidebar } from "@/components/floorplan/FloorplanSidebar";
-import { FloorplanVariationPicker } from "@/components/floorplan/FloorplanVariationPicker";
 import { FloorplanOnboarding } from "@/components/onboarding/FloorplanOnboarding";
 import type { ArchitecturalProgram } from "@/lib/architectural-program/types";
-import type { GenerateArchitecturalProgramResult } from "@/lib/architectural-program";
 import type {
   LayoutVariation,
   RepairLogEntry,
 } from "@/lib/floorplan-layout/generate-layout-variations";
-import { FloorplanRepairLog } from "@/components/floorplan/FloorplanRepairLog";
-import { FloorplanCriticBanner } from "@/components/floorplan/FloorplanCriticBanner";
-import { FloorplanCandidateReview } from "@/components/floorplan/FloorplanCandidateReview";
-import { FloorplanOptionExplanation } from "@/components/floorplan/FloorplanOptionExplanation";
 import type { CandidateCriticOutput } from "@/lib/ai-prompts/candidate-critic-types";
 import type { UserPreferences } from "@/lib/onboarding/user-preferences";
 import {
@@ -25,22 +17,12 @@ import {
   type PipelineDebugTrace,
 } from "@/lib/pipeline-debug";
 import { PipelineDebugPanel } from "@/components/floorplan/PipelineDebugPanel";
-import { ArchitecturalPipelineDebugPanel } from "@/components/floorplan/ArchitecturalPipelineDebugPanel";
 import type { MutationType } from "@/lib/architecture/mutations";
-import type { PipelineResult } from "@/lib/architecture/generationPipeline";
-import { runArchitecturalPipeline } from "@/lib/architecture/generationPipeline";
-import {
-  getBaseGeneratedPlan,
-  getRecommendedVariantView,
-  getTopVariantViews,
-  resolveVariantView,
-} from "@/lib/architecture/pipelineUiAdapter";
+import { runFloorPlanPipeline } from "@/lib/architecture/floorPlanPipeline";
+import type { FloorPlanPipelineResult } from "@/lib/architecture/floorPlanPipelineTypes";
+import { FloorPlanResultPage } from "@/components/floorplan/result/FloorPlanResultPage";
 import { buildPromptFromPreferences } from "@/lib/onboarding/user-preferences";
-import {
-  adaptArchitectureProgramToRenderer,
-  adaptGeneratedPlanToRenderer,
-} from "@/lib/architecture/adaptGeneratedPlanToRenderer";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type FloorplanAppPhase =
   | "ONBOARDING"
@@ -60,7 +42,7 @@ type FloorplanAppState = {
   error: string | null;
   warnings: string[];
   debugTrace: PipelineDebugTrace | null;
-  architecturePipeline: PipelineResult | null;
+  floorPlanPipeline: FloorPlanPipelineResult | null;
   critic: CandidateCriticOutput | null;
   criticSource: "gemini" | "local" | null;
   repairLog: RepairLogEntry[];
@@ -76,7 +58,7 @@ const INITIAL_STATE: FloorplanAppState = {
   error: null,
   warnings: [],
   debugTrace: null,
-  architecturePipeline: null,
+  floorPlanPipeline: null,
   critic: null,
   criticSource: null,
   repairLog: [],
@@ -88,40 +70,6 @@ export function FloorplanApp() {
     useState<MutationType>("base");
   const generateStarted = useRef(false);
   const layoutStarted = useRef(false);
-
-  const activeLayout =
-    state.layoutVariations[state.selectedVariationIndex]?.layout ?? null;
-
-  const selectedPipelineVariantResult = useMemo(() => {
-    const pipe = state.architecturePipeline;
-    if (!pipe?.variants.length) return null;
-    return (
-      resolveVariantView(pipe, selectedPipelineVariant) ??
-      resolveVariantView(pipe, "base") ??
-      resolveVariantView(pipe, pipe.variants[0]!.mutationType)
-    );
-  }, [state.architecturePipeline, selectedPipelineVariant]);
-
-  const pipelineRendererBundle = useMemo(() => {
-    const pipe = state.architecturePipeline;
-    if (!pipe) return null;
-    const plan =
-      selectedPipelineVariantResult?.plan ?? getBaseGeneratedPlan(pipe);
-    if (!plan) return null;
-    return {
-      layout: adaptGeneratedPlanToRenderer(plan),
-      program: adaptArchitectureProgramToRenderer(
-        pipe.program,
-        pipe.topologyGraph,
-      ),
-      variant: selectedPipelineVariantResult,
-    };
-  }, [state.architecturePipeline, selectedPipelineVariantResult]);
-
-  const displayLayout = pipelineRendererBundle?.layout ?? activeLayout;
-  const displayProgram =
-    pipelineRendererBundle?.program ?? state.program;
-  const usingPipelinePlan = pipelineRendererBundle != null;
 
   const resetToOnboarding = useCallback(() => {
     generateStarted.current = false;
@@ -143,7 +91,7 @@ export function FloorplanApp() {
       error: null,
       warnings: [],
       debugTrace: null,
-      architecturePipeline: null,
+      floorPlanPipeline: null,
       critic: null,
       criticSource: null,
       repairLog: [],
@@ -270,63 +218,45 @@ export function FloorplanApp() {
         output: summarizePreferences(state.preferences!),
       });
 
-      const architecturePipeline = await runArchitecturalPipeline(userPrompt, {
-        debug: isPipelineDebugEnabled(),
-      });
+      const floorPlanPipeline = await runFloorPlanPipeline(userPrompt);
       if (cancelled) return;
-      const recommendedType =
-        architecturePipeline.recommendation?.bestVariantId ?? "base";
-      setSelectedPipelineVariant(recommendedType);
-      setState((s) => ({ ...s, architecturePipeline }));
 
-      try {
-        const res = await fetch("/api/architectural-program", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userPreferences: state.preferences }),
-        });
+      if (isPipelineDebugEnabled()) clientTrace.finish();
 
-        const data: GenerateArchitecturalProgramResult = await res.json();
-
-        if (cancelled) return;
-
-        if (!data.ok) {
-          if (isPipelineDebugEnabled()) clientTrace.finish();
-          setState((s) => ({
-            ...s,
-            phase: "ONBOARDING",
-            error: data.error,
-            program: null,
-            layoutVariations: [],
-            debugTrace: mergeTraces(clientTrace.trace, data.debugTrace),
-          }));
-          generateStarted.current = false;
-          return;
-        }
-
-        if (isPipelineDebugEnabled()) clientTrace.finish();
-
-        setState((s) => ({
-          ...s,
-          phase: "CALCULATING_LAYOUT",
-          program: data.program,
-          warnings: data.warnings,
-          error: null,
-          debugTrace: mergeTraces(clientTrace.trace, data.debugTrace),
-        }));
-      } catch (err) {
-        if (cancelled) return;
+      if (floorPlanPipeline.status === "failed") {
         setState((s) => ({
           ...s,
           phase: "ONBOARDING",
           error:
-            "Error de red al contactar el servidor. Verificá que `npm run dev` esté activo.",
+            "No pudimos generar un concepto válido con tu brief. Probá ajustar ambientes o superficie.",
+          floorPlanPipeline,
           program: null,
           layoutVariations: [],
           debugTrace: clientTrace.trace,
         }));
         generateStarted.current = false;
+        return;
       }
+
+      const recommendedType =
+        (floorPlanPipeline.recommendedVariant?.mutationType ??
+          floorPlanPipeline.publicResult.recommendedVariantId ??
+          "base") as MutationType;
+      setSelectedPipelineVariant(recommendedType);
+
+      setState((s) => ({
+        ...s,
+        phase: "VIEWING_PLAN",
+        program: null,
+        floorPlanPipeline,
+        layoutVariations: [],
+        critic: null,
+        criticSource: null,
+        repairLog: [],
+        warnings: [],
+        error: null,
+        debugTrace: clientTrace.trace,
+      }));
     })();
 
     return () => {
@@ -338,6 +268,7 @@ export function FloorplanApp() {
     if (state.phase !== "CALCULATING_LAYOUT" || !state.program || !state.preferences) {
       return;
     }
+    if (state.floorPlanPipeline) return;
     if (layoutStarted.current) return;
     layoutStarted.current = true;
 
@@ -384,20 +315,17 @@ export function FloorplanApp() {
     applyVariationsToState,
   ]);
 
-  const selectedVariation =
-    state.layoutVariations[state.selectedVariationIndex];
-  const selectedReview =
-    state.critic?.candidateReviews.find(
-      (r) => r.candidateId === selectedVariation?.optionId,
-    ) ?? null;
-
   const hasDebugTrace =
     isPipelineDebugEnabled() &&
     state.debugTrace != null &&
     state.debugTrace.steps.length > 0;
 
-  const showArchitecturePipeline =
-    isPipelineDebugEnabled() && state.architecturePipeline != null;
+  const showConceptResult =
+    state.phase === "GENERATING_PROGRAM" ||
+    (state.phase === "VIEWING_PLAN" && state.floorPlanPipeline != null);
+
+  /** Plantillas A–E, critic y recomendación conceptual (flujo Maket legacy). */
+  const showLegacyTemplateUi = state.floorPlanPipeline == null;
 
   return (
     <div className="space-y-6">
@@ -422,19 +350,41 @@ export function FloorplanApp() {
         </>
       )}
 
-      {state.phase === "GENERATING_PROGRAM" && (
+      {showConceptResult && (
+        <div className="rounded-3xl bg-white/70 p-4 shadow-sm ring-1 ring-stone-200/60 sm:p-6 lg:p-8">
+          <FloorPlanResultPage
+            publicResult={state.floorPlanPipeline?.publicResult ?? null}
+            debug={state.floorPlanPipeline?.debug ?? null}
+            loading={!state.floorPlanPipeline}
+            error={
+              state.floorPlanPipeline?.status === "failed"
+                ? "No pudimos generar un concepto válido con tu brief."
+                : null
+            }
+            onVariantChange={(id) =>
+              setSelectedPipelineVariant(id as MutationType)
+            }
+          />
+          {state.phase === "VIEWING_PLAN" && state.floorPlanPipeline && (
+            <div className="mt-6 flex flex-wrap gap-3 border-t border-stone-200/80 pt-6">
+              <button
+                type="button"
+                onClick={resetToOnboarding}
+                className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+              >
+                Nuevo brief
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {state.phase === "GENERATING_PROGRAM" && !state.floorPlanPipeline && (
         <>
           <FloorplanLoader
             title="IA definiendo programa espacial…"
             subtitle="Ambientes, relaciones y criterios de diseño — sin geometría fija."
           />
-          {showArchitecturePipeline && (
-            <ArchitecturalPipelineDebugPanel
-              result={state.architecturePipeline}
-              selectedVariantType={selectedPipelineVariant}
-              onSelectVariant={setSelectedPipelineVariant}
-            />
-          )}
           {hasDebugTrace && (
             <PipelineDebugPanel
               trace={state.debugTrace}
@@ -444,204 +394,18 @@ export function FloorplanApp() {
         </>
       )}
 
-      {state.phase === "CALCULATING_LAYOUT" && (
+      {state.phase === "CALCULATING_LAYOUT" && showLegacyTemplateUi && (
         <>
           <FloorplanLoader
             title="Componiendo conceptos arquitectónicos…"
             subtitle="Generando opciones A–E con plantillas curadas y puntuación de calidad."
           />
-          {showArchitecturePipeline && (
-            <ArchitecturalPipelineDebugPanel
-              result={state.architecturePipeline}
-              selectedVariantType={selectedPipelineVariant}
-              onSelectVariant={setSelectedPipelineVariant}
-            />
-          )}
           {hasDebugTrace && (
             <PipelineDebugPanel trace={state.debugTrace} />
           )}
         </>
       )}
 
-      {state.phase === "VIEWING_PLAN" &&
-        state.preferences &&
-        displayProgram &&
-        displayLayout && (
-          <div className="flex flex-col gap-6">
-            {showArchitecturePipeline && (
-              <ArchitecturalPipelineDebugPanel
-                result={state.architecturePipeline}
-                selectedVariantType={selectedPipelineVariant}
-                onSelectVariant={setSelectedPipelineVariant}
-              />
-            )}
-            {hasDebugTrace && (
-              <PipelineDebugPanel
-                trace={state.debugTrace}
-                title="Debug — pipeline legacy (plantillas)"
-              />
-            )}
-
-            {state.repairLog.length > 0 && (
-              <FloorplanRepairLog entries={state.repairLog} />
-            )}
-
-            {state.critic && state.criticSource && (
-              <FloorplanCriticBanner
-                critic={state.critic}
-                criticSource={state.criticSource}
-                variations={state.layoutVariations}
-                selectedIndex={state.selectedVariationIndex}
-                onSelectRecommended={() => {
-                  const idx = state.layoutVariations.findIndex(
-                    (v) =>
-                      v.optionId === state.critic?.recommendedCandidateId,
-                  );
-                  if (idx >= 0) {
-                    setState((s) => ({ ...s, selectedVariationIndex: idx }));
-                  }
-                }}
-              />
-            )}
-
-            <FloorplanVariationPicker
-              variations={state.layoutVariations}
-              selectedIndex={state.selectedVariationIndex}
-              recommendedOptionId={state.critic?.recommendedCandidateId}
-              onSelect={(index) =>
-                setState((s) => ({ ...s, selectedVariationIndex: index }))
-              }
-            />
-
-            {selectedReview && <FloorplanCandidateReview review={selectedReview} />}
-
-            {selectedVariation && (
-              <FloorplanOptionExplanation
-                key={`${state.variationGeneration}-${state.selectedVariationIndex}`}
-                variation={selectedVariation}
-                program={displayProgram}
-                preferences={state.preferences}
-              />
-            )}
-
-            {state.architecturePipeline?.recommendation && (
-              <div className="rounded-xl border border-violet-200 bg-violet-50/70 px-4 py-3 text-sm text-violet-950">
-                <p className="font-semibold">
-                  Recomendación:{" "}
-                  {state.architecturePipeline.recommendation.bestVariantLabel}
-                  {state.architecturePipeline.ranking[0] && (
-                    <span className="ml-2 text-violet-700">
-                      (
-                      {state.architecturePipeline.ranking[0].totalScore}
-                      /100)
-                    </span>
-                  )}
-                </p>
-                <ul className="mt-2 list-disc pl-5 text-xs">
-                  {state.architecturePipeline.recommendation.why.map((w, i) => (
-                    <li key={i}>{w}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {usingPipelinePlan && state.architecturePipeline?.variants.length ? (
-              <div className="space-y-3 rounded-xl border border-teal-200 bg-teal-50/60 px-4 py-3 text-sm text-teal-950">
-                <p>
-                  Variante del <strong>Mutation Engine</strong> (plantilla{" "}
-                  <code className="text-xs">l_shape_patio</code>). Las opciones
-                  A–E legacy siguen abajo para comparar.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {state.architecturePipeline.variants.map((v) => {
-                    const rank = state.architecturePipeline?.ranking.find(
-                      (t) => t.mutationType === v.mutationType,
-                    )?.rank;
-                    return (
-                    <button
-                      key={v.mutationType}
-                      type="button"
-                      onClick={() =>
-                        setSelectedPipelineVariant(v.mutationType)
-                      }
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium ring-1 transition ${
-                        selectedPipelineVariant === v.mutationType
-                          ? "bg-teal-700 text-white ring-teal-800"
-                          : "bg-white text-teal-900 ring-teal-200 hover:bg-teal-100"
-                      }`}
-                    >
-                      {rank != null && (
-                        <span className="mr-1 font-bold text-violet-600">
-                          #{rank}
-                        </span>
-                      )}
-                      {v.label}
-                      <span
-                        className={`ml-1.5 rounded px-1 py-0.5 text-[10px] uppercase ${
-                          v.status === "ok"
-                            ? "bg-emerald-200 text-emerald-900"
-                            : v.status === "skipped"
-                              ? "bg-stone-200 text-stone-700"
-                              : v.status === "warn"
-                                ? "bg-amber-200 text-amber-900"
-                                : "bg-red-200 text-red-900"
-                        }`}
-                      >
-                        {v.status}
-                      </span>
-                      {!v.eligibleForRanking && (
-                        <span className="ml-1 text-[9px] text-stone-500">
-                          · no ranking
-                        </span>
-                      )}
-                    </button>
-                    );
-                  })}
-                </div>
-                {selectedPipelineVariantResult &&
-                  selectedPipelineVariantResult.status !== "ok" && (
-                    <ul className="list-disc pl-5 text-xs text-amber-950">
-                      {selectedPipelineVariantResult.messages.map((m, i) => (
-                        <li key={i}>{m}</li>
-                      ))}
-                    </ul>
-                  )}
-              </div>
-            ) : usingPipelinePlan ? (
-              <div className="rounded-xl border border-teal-200 bg-teal-50/60 px-4 py-3 text-sm text-teal-950">
-                Plano visible generado por el{" "}
-                <strong>Parametric Parti Generator</strong> (plantilla{" "}
-                <code className="text-xs">l_shape_patio</code>).
-              </div>
-            ) : null}
-
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-              <FloorplanSidebar
-                preferences={state.preferences}
-                program={displayProgram}
-                layout={displayLayout}
-                selectedOption={
-                  state.layoutVariations[state.selectedVariationIndex]
-                }
-                warnings={[
-                  ...state.warnings,
-                  ...(selectedPipelineVariantResult?.validation.warnings ??
-                    state.architecturePipeline?.generatedPlanValidation
-                      .warnings ??
-                    []),
-                ].slice(0, 8)}
-                onAnotherLayout={handleMoreVariations}
-                onRegenerate={resetToOnboarding}
-              />
-              <div className="min-w-0 flex-1 rounded-2xl bg-gradient-to-b from-stone-100/80 to-stone-200/40 p-3 ring-1 ring-stone-200/50">
-                <FloorplanCanvas
-                  program={displayProgram}
-                  layout={displayLayout}
-                />
-              </div>
-            </div>
-          </div>
-        )}
     </div>
   );
 }

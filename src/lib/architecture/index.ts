@@ -76,12 +76,36 @@ export {
 } from "./topologyGraphBuilder";
 export {
   runArchitecturalPipeline,
+  runArchitecturalPipelineInternal,
   type PipelineResult,
   type PipelineStage,
   type PipelineValidation,
   type RunArchitecturalPipelineOptions,
   type PipelineInternalResult,
 } from "./generationPipeline";
+export {
+  runFloorPlanPipeline,
+  type FloorPlanPipelineResult,
+  type RunFloorPlanPipelineOptions,
+  type PublicFloorPlanResult,
+  type FloorPlanDebugPayload,
+  type ArchitectBrief,
+  type SvgPlanRender,
+  type VisualInspirationPrompt,
+} from "./floorPlanPipeline";
+export { renderPlanToSvg, renderVariantsToSvg } from "./svgRenderer";
+export { generateArchitectBrief } from "./architectBriefGenerator";
+export { generateVisualInspirationPrompt } from "./visualInspirationPrompt";
+export {
+  buildPublicFloorPlanResult,
+  buildFloorPlanDebugPayload,
+  toFloorPlanPipelineResult,
+} from "./pipelinePublicOutput";
+export type {
+  PipelineRunStatus,
+  ProgramExtractionResult,
+  PublicVariantSummary,
+} from "./floorPlanPipelineTypes";
 export {
   buildNormalizedPipelineResponse,
   type CompactPipelineResponse,
