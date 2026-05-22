@@ -1,18 +1,33 @@
-/**
- * Experimental wall graph — only when wallGraphDebug is enabled (dev/admin).
- */
+import { ARCH } from "./architecturalPalette";
 import { splitWallForOpening, STROKE } from "./planGeometryUtils";
 import type { PlanOpening, WallSegment } from "./types";
 
 const INTERIOR = "#1E293B";
-const EXTERIOR = "#B45309";
+const EXTERIOR_DEBUG = "#B45309";
 const OPENING_CUT = "#DC2626";
 
 function segmentMid(seg: WallSegment): { x: number; y: number } {
   return { x: (seg.x1 + seg.x2) / 2, y: (seg.y1 + seg.y2) / 2 };
 }
 
-function renderExteriorSegment(seg: WallSegment): string {
+function renderPublicExteriorSegment(seg: WallSegment): string {
+  const dash = seg.dashed ? ' stroke-dasharray="2.4 1.2"' : "";
+  return (
+    `<line x1="${seg.x1}" y1="${seg.y1}" x2="${seg.x2}" y2="${seg.y2}" ` +
+    `stroke="${ARCH.wallExterior}" stroke-width="${ARCH.wallExteriorWidth}" ` +
+    `stroke-linecap="square" stroke-linejoin="miter"${dash}/>`
+  );
+}
+
+function renderPublicInteriorSegment(seg: WallSegment): string {
+  return (
+    `<line x1="${seg.x1}" y1="${seg.y1}" x2="${seg.x2}" y2="${seg.y2}" ` +
+    `stroke="${ARCH.wallInterior}" stroke-width="${ARCH.wallInteriorWidth}" ` +
+    `stroke-linecap="square" stroke-linejoin="miter"/>`
+  );
+}
+
+function renderDebugExteriorSegment(seg: WallSegment): string {
   const dash = seg.dashed ? ' stroke-dasharray="2.2 1.4"' : "";
   const dx = seg.x2 - seg.x1;
   const dy = seg.y2 - seg.y1;
@@ -24,25 +39,24 @@ function renderExteriorSegment(seg: WallSegment): string {
 
   return (
     `<line x1="${seg.x1}" y1="${seg.y1}" x2="${seg.x2}" y2="${seg.y2}" ` +
-    `stroke="${EXTERIOR}" stroke-width="${STROKE.exterior}" stroke-linecap="square" data-wall-kind="exterior"/>` +
+    `stroke="${EXTERIOR_DEBUG}" stroke-width="${STROKE.exterior}" stroke-linecap="square" data-wall-kind="exterior"/>` +
     `<line x1="${seg.x1 + nx}" y1="${seg.y1 + ny}" x2="${seg.x2 + nx}" y2="${seg.y2 + ny}" ` +
-    `stroke="${EXTERIOR}" stroke-width="${STROKE.exteriorOuter}" stroke-linecap="square"${dash} data-wall-kind="exterior-candidate"/>`
+    `stroke="${EXTERIOR_DEBUG}" stroke-width="${STROKE.exteriorOuter}" stroke-linecap="square"${dash} data-wall-kind="exterior-candidate"/>`
   );
 }
 
-function renderInteriorSegment(seg: WallSegment): string {
+function renderDebugInteriorSegment(seg: WallSegment): string {
   return (
     `<line x1="${seg.x1}" y1="${seg.y1}" x2="${seg.x2}" y2="${seg.y2}" ` +
     `stroke="${INTERIOR}" stroke-width="${STROKE.interior}" stroke-linecap="square" data-wall-kind="interior"/>`
   );
 }
 
-export function renderWallGraphLayer(
+function cutWallsForOpenings(
   walls: WallSegment[],
   openings: PlanOpening[],
-): string {
+): WallSegment[] {
   const cutWalls: WallSegment[] = [];
-
   for (const wall of walls) {
     let parts: WallSegment[] = [wall];
     for (const op of openings) {
@@ -54,12 +68,34 @@ export function renderWallGraphLayer(
     }
     cutWalls.push(...parts);
   }
+  return cutWalls;
+}
 
+/** Public preliminary plan — thick dark architectural walls. */
+export function renderArchitecturalWallLayer(
+  walls: WallSegment[],
+  openings: PlanOpening[],
+): string {
+  const cutWalls = cutWallsForOpenings(walls, openings);
   return cutWalls
     .map((seg) =>
       seg.kind === "exterior"
-        ? renderExteriorSegment(seg)
-        : renderInteriorSegment(seg),
+        ? renderPublicExteriorSegment(seg)
+        : renderPublicInteriorSegment(seg),
+    )
+    .join("");
+}
+
+export function renderWallGraphLayer(
+  walls: WallSegment[],
+  openings: PlanOpening[],
+): string {
+  const cutWalls = cutWallsForOpenings(walls, openings);
+  return cutWalls
+    .map((seg) =>
+      seg.kind === "exterior"
+        ? renderDebugExteriorSegment(seg)
+        : renderDebugInteriorSegment(seg),
     )
     .join("");
 }
@@ -72,7 +108,7 @@ export function renderWallGraphDebugAnnotations(
     .map((seg) => {
       const { x, y } = segmentMid(seg);
       const label = seg.debugId ?? seg.kind;
-      const fill = seg.kind === "exterior" ? EXTERIOR : INTERIOR;
+      const fill = seg.kind === "exterior" ? EXTERIOR_DEBUG : INTERIOR;
       return (
         `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" ` +
         `font-size="0.65" font-family="monospace" fill="${fill}" opacity="0.85">${label}</text>`

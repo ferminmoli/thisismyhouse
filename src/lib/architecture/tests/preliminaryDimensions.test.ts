@@ -14,7 +14,8 @@ describe("preliminary dimensions", () => {
   const plan = publicPlanToGenerated(variant.plan);
 
   it("formats length with two decimals and m suffix", () => {
-    expect(formatLengthM(8.4)).toBe("8.40 m");
+    expect(formatLengthM(8.4)).toBe("8,40 m");
+    expect(formatLengthM(13.5)).toBe("13,50 m");
   });
 
   it("derives scale from area estimate and covered canvas units", () => {
@@ -42,7 +43,28 @@ describe("preliminary dimensions", () => {
     const svg = renderArchitecturalPlanSvg(model).svg;
     expect(svg).toContain('id="preliminary-dimensions"');
     expect(svg).toContain("Medidas preliminares estimadas");
-    expect(svg).toMatch(/\d+\.\d{2} m/);
+    expect(svg).toMatch(/\d+,\d{2} m/);
+  });
+
+  it("places covered width above and patio width below footprint", () => {
+    const model = buildPlanViewModel(plan, {
+      variantId: variant.id,
+      variantLabel: variant.label,
+    });
+    const bounds = derivePreliminaryScale(model.rooms, plan.metadata.areaEstimate);
+    expect(bounds).not.toBeNull();
+
+    const covWidth = model.dimensions.find((d) => d.id === "cov-width");
+    const patioWidth = model.dimensions.find((d) => d.id === "patio-width");
+    expect(covWidth).toBeDefined();
+    if (covWidth && patioWidth) {
+      expect(covWidth.y1).toBeLessThan(
+        Math.min(...model.rooms.filter((r) => r.enclosure === "covered").map((r) => r.y)),
+      );
+      const patio = model.rooms.find((r) => r.enclosure === "outdoor");
+      expect(patio).toBeDefined();
+      expect(patioWidth!.y1).toBeGreaterThan(patio!.y + patio!.height);
+    }
   });
 
   it("omits dimensions when scale cannot be derived safely", () => {

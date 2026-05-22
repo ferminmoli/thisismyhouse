@@ -1,0 +1,20 @@
+/** Monochrome Argentine preliminary plan palette. */
+export const ARCH = {
+  paper: "#FFFFFF",
+  sheetStrip: "#FAFAF9",
+  ink: "#111827",
+  inkMuted: "#475569",
+  inkSoft: "#94A3B8",
+  rule: "#E2E8F0",
+  fillCovered: "#FCFCFC",
+  fillOutdoor: "#F9FAFB",
+  fillSemi: "#FAFAFA",
+  wallExterior: "#111827",
+  wallInterior: "#111827",
+  furniture: "#475569",
+  dimension: "#6B8CAE",
+  window: "#5B7C9A",
+  windowGlass: "#94A3B8",
+  wallExteriorWidth: 0.92,
+  wallInteriorWidth: 0.42,
+} as const;

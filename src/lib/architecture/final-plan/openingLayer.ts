@@ -1,11 +1,13 @@
 import type { PlanOpening, PlanWindow, WallSide } from "./types";
 
+import { ARCH } from "./architecturalPalette";
+
 const WALL_ERASE = "#FFFFFF";
-const DOOR = "#1E293B";
-const PASSAGE = "#64748B";
-const WINDOW_FRAME = "#5B7C9A";
-const WINDOW_GLASS = "#94A3B8";
-const SLIDING_TRACK = "#475569";
+const DOOR = ARCH.ink;
+const PASSAGE = ARCH.inkMuted;
+const WINDOW_FRAME = ARCH.window;
+const WINDOW_GLASS = ARCH.windowGlass;
+const SLIDING_TRACK = ARCH.inkMuted;
 
 function wallGap(
   x1: number,

@@ -1,227 +1,186 @@
-# 01 — Public Floor Plan Renderer
+# 01 — Public Floor Plan Renderer (Planta preliminar argentina)
 
 ## Goal
 
-Create or improve the public-facing SVG floor plan renderer so it looks premium and architecture-assistant ready, while keeping legacy/debug renderers hidden from normal users.
+Improve the public-facing SVG floor plan so it reads like a **professional Argentine preliminary architectural plan** — monochrome, thick dark walls, cotas exteriores estimadas, rótulo inferior, norte — while clearly stating it is **conceptual and not construction-ready**.
 
-This is the first implementation prompt on purpose: do only the public renderer. Do not mix result-page layout, copy, architect brief, or visual inspiration changes into this step.
+Do **not** build a colorful “premium app diagram”. Do **not** claim municipal/IRAM compliance.
 
 ## Current repo findings
 
-The repo already has a public renderer chain:
+Public result UI uses:
 
 ```text
 FloorPlanResultView
-→ PremiumFloorPlanSvg
-→ FloorPlanSvgRenderer
-→ publicPlanToGenerated
-→ renderPlanToSvg
-→ PlanSvgViewer
+→ FinalPlanRenderer
+→ renderFinalPlanToSvg
+→ final-plan/architecturalPlanSvg.ts
 ```
 
-Relevant files:
+Legacy chain (debug / deprecated wrapper only):
 
-- `src/components/floorplan/result/PremiumFloorPlanSvg.tsx`
-- `src/components/floorplan/result/FloorPlanSvgRenderer.tsx`
-- `src/components/floorplan/result/PlanSvgViewer.tsx`
+```text
+PremiumFloorPlanSvg → FloorPlanSvgRenderer → svgRenderer.ts
+```
+
+**Primary implementation path:** `src/lib/architecture/final-plan/*` and `finalPlanRenderer.ts`.
+
+## Visual target
+
+The floor plan must look like a professional Argentine preliminary architectural plan, not like a colorful app diagram.
+
+### Reference style
+
+- Argentine “planta preliminar”
+- Mostly black / white / off-white
+- Thick dark walls (`#111827`)
+- Clean room labels in Spanish
+- Exterior dimension lines (cotas) when scale is safely estimable
+- North arrow
+- Title block / rótulo at bottom
+- Furniture as thin architectural linework
+- Patio / exterior with hatch or dashed boundary
+- Disclaimer: “No apto para obra”
+
+### Required language (rótulo / notas)
+
+- “Planta preliminar”
+- “Superficie cubierta aprox.”
+- “Superficie exterior aprox.”
+- “Escala conceptual / S.E.”
+- “Medidas preliminares estimadas”
+- “No apto para obra”
+- “Sin validez municipal”
+- “Revisión profesional requerida”
+
+### Do NOT use
+
+- Colorful category-board look
+- Big colorful legend inside SVG
+- Debug style boxes / raw IDs / scorer values
+- Fake matrícula, firma, sello, carátula municipal
+- Claims of IRAM or municipal compliance
+- Construction-ready or permit-ready wording
+
+## Argentine plan standard requirement
+
+Visually inspired by Argentine drawing conventions (IRAM-style linework as reference only), but **must NOT** claim formal regulatory compliance.
+
+Important:
+
+- Do not generate a legally valid municipal plan.
+- Do not generate a construction-ready drawing.
+- Do not include fake professional signatures, license numbers, approval stamps, municipal seals, or expediente numbers.
+
+## Renderer style requirements
+
+### 1. Monochrome architectural look
+
+- White/off-white paper
+- Very subtle room fills
+- Dark navy/black walls
+- Thin gray furniture
+- Light blue-gray cotas
+- Minimal color only for windows / outdoor hatch
+
+### 2. Walls
+
+- Exterior: thick dark stroke
+- Interior: slightly thinner dark stroke
+- Squared corners / miter joins
+- Doors/windows cut through walls
+- Public path: **one stroke per zone** via `simpleRoomBoundaryLayer` (perimeter thick / interior thinner). **Do not** enable `buildWallSegments` on public — it duplicates strokes into an unreadable grid.
+
+### 3. Openings
+
+- Doors: wall gap + leaf + swing arc
+- Passages: clear interruption, wider opening
+- Windows: gap + thin double-line marker
+
+### 4. Room labels (Spanish)
+
+Examples: Dormitorio principal, Estar / comedor, Cocina, Baño, Patio, Galería, Acceso / Ingreso.
+
+Format:
+
+```text
+Dormitorio principal
+21 m²
+```
+
+Hide m² in tiny rooms. Never show raw IDs.
+
+### 5. Furniture
+
+Thin stroke, low weight, architectural symbols (bed, table, sofa, fixtures).
+
+### 6. Patio / exterior
+
+Dashed border, diagonal hatch, label “Patio”.
+
+### 7. Cotas
+
+Only when `derivePreliminaryScale` is safe. Argentine comma decimals: `13,50 m`. Footer note when shown.
+
+### 8. North arrow
+
+Small “N” + arrow, upper-right drawing area.
+
+### 9. Title block
+
+Compact bottom rótulo — see language list above. Plan remains the hero (`titleBlockH: 14`).
+
+### 10. Legend
+
+**No colorful legend inside public SVG.** `legend: []` from final renderer.
+
+## Files to focus on
+
+Improve existing path — do not duplicate renderers:
+
+- `src/lib/architecture/final-plan/*`
+- `src/lib/architecture/finalPlanRenderer.ts`
+- `src/components/floorplan/result/FinalPlanRenderer.tsx`
+- `src/components/floorplan/result/FloorPlanResultView.tsx`
+
+Legacy (debug only):
+
 - `src/lib/architecture/svgRenderer.ts`
-- `src/lib/architecture/publicFloorPlanTypes.ts`
-- `src/lib/architecture/floorPlanPipelineTypes.ts`
-- `src/lib/architecture/generatedPlan.ts`
-- `src/lib/architecture/spaceClassification.ts`
-- `src/lib/architecture/planMetadata.ts`
-- `src/lib/architecture/tests/svgRenderer.test.ts`
+- `PremiumFloorPlanSvg.tsx` / `FloorPlanSvgRenderer.tsx`
 
-The existing `svgRenderer.ts` already renders:
+## Data
 
-- zones
-- doors
-- windows
-- furniture
-- legend
-- title block
-- disclaimer text: `Planta conceptual · no es plano de obra`
+Use:
 
-But the product need is stricter: the public SVG must not feel like a debug/prototype diagram.
-
-## Files to inspect
-
-- `src/components/floorplan/result/PremiumFloorPlanSvg.tsx`
-- `src/components/floorplan/result/FloorPlanSvgRenderer.tsx`
-- `src/components/floorplan/result/PlanSvgViewer.tsx`
-- `src/lib/architecture/svgRenderer.ts`
-- `src/lib/architecture/generatedPlan.ts`
-- `src/lib/architecture/spaceClassification.ts`
-- `src/lib/architecture/planMetadata.ts`
-- `src/lib/architecture/tests/svgRenderer.test.ts`
-
-## Files likely to modify
-
-- `src/lib/architecture/svgRenderer.ts`
-- `src/components/floorplan/result/PlanSvgViewer.tsx`
-- `src/components/floorplan/result/PremiumFloorPlanSvg.tsx` only if prop naming/description needs tightening.
-- `src/components/floorplan/result/FloorPlanSvgRenderer.tsx` only if area metadata mapping is incomplete.
-- `src/lib/architecture/tests/svgRenderer.test.ts`
-
-## Detailed requirements
-
-### Renderer data
-
-Use only public/render data:
-
-- `plan.zones`
-- `plan.doors`
-- `plan.windows`
-- `plan.furniture`
-- `plan.metadata.areaEstimate`
-- zone-level `estimatedAreaM2` mapped through `publicPlanToGenerated`
-- `variantLabel`
-- `variantId`
-
-Coordinates are normalized 100×100 conceptual canvas coordinates.
-
-Do not invent linear dimensions.
-Do not show fake meters.
-Show room m² only when available from area estimates.
-
-### Visual direction
-
-The output should feel like:
-
-- boutique architecture concept board
-- premium real estate assistant
-- clean architectural diagram
-
-Not like:
-
-- SVG debugger
-- JSON visualizer
-- old conceptual prototype
-- internal planning graph
-
-### SVG composition
-
-- Keep the plan large and readable.
-- Give the drawing breathing room.
-- Use off-white/paper background.
-- Use subtle container/card styling.
-- Avoid huge duplicated title inside SVG.
-- Keep a small caption: `Planta conceptual · no es plano de obra`.
-- Keep legend outside the plan drawing area or make it minimal enough not to dominate.
-- No debug grid.
-- No raw coordinates.
-- No hover tooltip.
-- No scorer/debug tokens.
-
-### Zone styling
-
-Subtle colors by zone type:
-
-- social: warm light tone
-- private: soft muted lavender
-- service: soft blue
-- circulation: very light neutral
-- outdoor: light green + subtle hatch
-- semi_outdoor: soft green/gray + hatch/dashed treatment
-
-Room label rules:
-
-- Center labels when possible.
-- Use readable font sizes.
-- Hide labels for extremely small rooms if necessary.
-- Hide area line for small rooms.
-- Humanize labels from ids.
-- Do not expose raw ids like `DORMITORIO_PRINCIPAL` if a human label can be shown.
-
-Suggested normalization:
-
-- `SALA_COMEDOR` → `Estar / comedor`
-- `DORMITORIO_PRINCIPAL` → `Dormitorio principal`
-- `DORMITORIO_1` → `Dormitorio 1`
-- `DORMITORIO_2` → `Dormitorio 2`
-- `DORMITORIO_3` → `Dormitorio 3`
-- `BANIO`, `BAÑO`, `BANO` → `Baño`
-- `DISTRIBUIDOR` → `Distrib.`
-- `LAVADERO` → `Lavadero`
-- `PATIO` → `Patio`
-- `COCINA` → `Cocina`
-- `ACCESO` → `Acceso`
-- `GALERIA` → `Galería`
-
-### Walls, doors, windows
-
-- Exterior/perimeter walls should read slightly stronger than interior boundaries if feasible.
-- Shared walls must not look doubled or ugly.
-- Doors should visibly interrupt/open the wall.
-- `door`: subtle hinged door / swing arc if feasible.
-- `open_passage`: clear opening, not a hinged door.
-- `sliding`: clean wide opening, especially social-to-patio.
-- Windows should be clean blue/cyan architectural line markers.
-- No debug labels for openings.
-
-### Furniture
-
-Render furniture only when it improves readability:
-
-- sofa
-- dining_table
-- kitchen_counter
-- bed_double
-- bed_single
-- wardrobe
-- bath_fixture
-- grill
-
-Furniture should be low-opacity, simple, and omitted in cramped rooms.
-
-### Responsiveness
-
-`PlanSvgViewer` should:
-
-- scale SVG responsively
-- avoid horizontal overflow
-- keep desktop output large and elegant
-- keep mobile readable
-- not force a tiny inner frame
-
-## Do not do
-
-- Do not modify `FloorPlanResultView` layout in this prompt unless absolutely required.
-- Do not modify variant selection logic.
-- Do not expose debug data.
-- Do not remove `FloorPlanResultDebugPanel`.
-- Do not delete legacy renderers/components.
-- Do not add real dimensions from normalized coordinates.
-- Do not run a production build.
+- `selectedVariant.plan` / `publicPlanToGenerated`
+- `selectedVariant.label`
+- `publicResult.title`
+- `plan.metadata.areaEstimate` for m² and safe scale
 
 ## Acceptance criteria
 
-- Public SVG renders zones, doors, windows, furniture, and m² estimates where available.
-- SVG includes `Planta conceptual · no es plano de obra`.
-- SVG does not include scorer/debug strings such as `penalties`, `adjacencyScore`, `daylightScore`, `mutationIntentScore`, `validation`.
-- Legend does not overlap the plan.
-- Room labels are humanized and readable.
-- Area labels hide in small rooms.
-- Patio/semi-covered areas are visually distinct.
-- Doors/windows are clean and visible.
-- `src/lib/architecture/tests/svgRenderer.test.ts` is updated to protect the behavior.
+- Thick dark architectural walls on public path
+- Clean white/off-white sheet
+- Clear door/window openings
+- Architectural furniture (when plan includes hints)
+- Patio hatch
+- Exterior cotas when safely estimated (comma decimals)
+- North arrow + bottom rótulo with all disclaimer lines
+- Spanish Argentine labels
+- No colorful legend inside plan
+- No debug UI / raw IDs / scorer internals
+- Clearly preliminary: “No apto para obra”, “Sin validez municipal”
 
 ## Final Cursor prompt
 
 ```md
-Implement prompt 01.
+Implement prompt 01 — Argentine preliminary plan visual target.
 
-Inspect the actual renderer chain:
-- `src/components/floorplan/result/PremiumFloorPlanSvg.tsx`
-- `src/components/floorplan/result/FloorPlanSvgRenderer.tsx`
-- `src/components/floorplan/result/PlanSvgViewer.tsx`
-- `src/lib/architecture/svgRenderer.ts`
-- `src/lib/architecture/generatedPlan.ts`
-- `src/lib/architecture/spaceClassification.ts`
-- `src/lib/architecture/planMetadata.ts`
-- `src/lib/architecture/tests/svgRenderer.test.ts`
+Primary path: FinalPlanRenderer → final-plan/*. Do not create a parallel renderer.
 
-Improve the existing public SVG renderer instead of creating a disconnected parallel renderer. The renderer must use normalized 100×100 conceptual coordinates, render zones/doors/windows/furniture/area estimates, look premium and architectural, include the subtle disclaimer `Planta conceptual · no es plano de obra`, and avoid debug grids/tooltips/raw ids/scorer internals.
+Apply monochrome Argentine preliminary style: thick #111827 walls via renderArchitecturalWallLayer, subtle fills, thin furniture, blue-gray cotas with comma decimals, north arrow, bottom rótulo with required Spanish disclaimer copy (including Sin validez municipal and Revisión profesional requerida).
 
-Keep legacy/debug renderers available only behind dev/admin debug paths; do not delete them. Do not modify variant selection or the broader result-page layout in this prompt. Add/update targeted SVG renderer tests. Do not run a production build.
+No colorful legend in public SVG. No municipal/legal claims. No fake signatures or stamps.
+
+Update tests in finalPlanRenderer.test.ts, sheetTitleBlock.test.ts, preliminaryDimensions.test.ts. Do not run production build.
 ```

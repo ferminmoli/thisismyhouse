@@ -21,7 +21,7 @@ export function buildPlanViewModel(
   const openings = buildOpenings(plan);
   const windows = buildWindows(plan);
   const layout = computePlanLayout(rooms);
-  const showFurniture = input.showFurniture === true;
+  const showFurniture = input.showFurniture !== false;
 
   const labels = buildRoomLabels(rooms, openings, windows, plan);
   const furniture = buildFurniture(plan, showFurniture);

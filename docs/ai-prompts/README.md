@@ -1,11 +1,11 @@
-# Cursor Prompt Pack — Premium Public Floor Plan Result
+# Cursor Prompt Pack — Argentine Preliminary Public Floor Plan
 
 This folder contains implementation prompts for Cursor. Use them one by one, in order.
 
 ## Recommended execution order
 
 1. `00-context.md` — read-only context. Do not implement from this file alone.
-2. `01-public-floor-plan-renderer.md` — improve/create the premium public SVG renderer.
+2. `01-public-floor-plan-renderer.md` — Argentine preliminary monochrome SVG renderer (`FinalPlanRenderer` / `final-plan/*`).
 3. `02-result-page-integration.md` — ensure selected variant drives all public result UI.
 4. `03-top-variants-selector.md` — polish top 3 variant cards/tabs.
 5. `04-why-this-plan-copy.md` — improve public explanation copy.
@@ -21,7 +21,7 @@ This folder contains implementation prompts for Cursor. Use them one by one, in 
 | Prompt | Purpose | Scope |
 | ------ | ------- | ----- |
 | `00-context.md` | Shared repo/product context | Read-only |
-| `01-public-floor-plan-renderer.md` | Premium SVG floor plan renderer | Renderer-focused |
+| `01-public-floor-plan-renderer.md` | Argentine preliminary SVG renderer | Renderer-focused (`final-plan/*`) |
 | `02-result-page-integration.md` | Selected variant integration | UI state/integration |
 | `03-top-variants-selector.md` | Top 3 public variant selector | UI-only |
 | `04-why-this-plan-copy.md` | Human explanation copy | UI/copy, maybe presenter sanitization |
@@ -50,7 +50,7 @@ Do not paste multiple implementation prompts at once. The order is designed to r
 
 Recommended checks by stage:
 
-- Prompt 01: `npm run test -- src/lib/architecture/tests/svgRenderer.test.ts`
+- Prompt 01: `npm run test -- src/lib/architecture/tests/finalPlanRenderer.test.ts src/lib/architecture/tests/sheetTitleBlock.test.ts src/lib/architecture/tests/preliminaryDimensions.test.ts`
 - Prompt 02: `npm run test -- src/components/floorplan/result/FloorPlanResultView.test.tsx`
 - Prompt 03: `npm run test -- src/lib/floorplan-result/selection.test.ts src/components/floorplan/result/FloorPlanResultView.test.tsx`
 - Prompt 04: run result view tests and leak utility tests.

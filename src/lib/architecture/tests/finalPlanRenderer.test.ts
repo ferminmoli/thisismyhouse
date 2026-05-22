@@ -76,6 +76,8 @@ describe("renderFinalPlanToSvg", () => {
     expect(render.svg).toContain("Planta preliminar");
     expect(render.svg).toContain("Escala conceptual / S.E.");
     expect(render.svg).toContain("No apto para obra");
+    expect(render.svg).toContain("Sin validez municipal");
+    expect(render.svg).not.toContain('id="architectural-walls"');
     expect(render.svg).not.toContain('id="walls"');
     expect(render.svg).not.toContain("mutation");
     expect(render.svg).not.toContain("adjacencyScore");
@@ -102,7 +104,7 @@ describe("renderFinalPlanToSvg", () => {
     expect(debugRender.svg).toContain('stroke-width="1.05"');
   });
 
-  it("uses zone rectangles only — no duplicated wall graph strokes", () => {
+  it("uses zone boundary strokes only — no wall graph on public path", () => {
     const render = renderFinalPlanToSvg({
       variantId: variant.id,
       variantLabel: variant.label,
@@ -110,14 +112,13 @@ describe("renderFinalPlanToSvg", () => {
     });
 
     expect(render.svg).toContain('id="simple-room-boundaries"');
-    expect(render.svg).not.toContain('id="walls"');
-    expect(render.svg).not.toContain('stroke-width="1.05"');
-    expect(render.svg).not.toContain('stroke-width="0.22" stroke-linecap="square"/>');
-    const thickWallCount = (render.svg.match(/stroke-width="1\.05"/g) ?? []).length;
-    expect(thickWallCount).toBe(0);
+    expect(render.svg).not.toContain('id="architectural-walls"');
+    expect(render.svg).not.toContain('id="wall-graph"');
+    expect(render.svg).not.toContain("wall-graph-debug-annotations");
+    expect(render.svg).toContain('stroke="#111827"');
   });
 
-  it("draws one clean stroke per room zone", () => {
+  it("draws one stroke per room zone on public path", () => {
     const model = buildPlanViewModel(publicPlanToGenerated(variant.plan), {
       variantId: variant.id,
       variantLabel: variant.label,
@@ -130,10 +131,10 @@ describe("renderFinalPlanToSvg", () => {
       render.svg.match(/<g id="simple-room-boundaries">([\s\S]*?)<\/g>/)?.[1] ?? "";
     const zoneRects = zoneGroup.match(/<rect x="/g) ?? [];
     expect(zoneRects.length).toBe(model.rooms.length);
-    expect(render.svg).toMatch(/stroke-width="0\.(36|62)"/);
+    expect(zoneGroup).toMatch(/stroke-width="0\.(42|92)"/);
   });
 
-  it("shows orientative north label when orientation unknown", () => {
+  it("shows north arrow when orientation unknown", () => {
     const render = renderFinalPlanToSvg({
       variantId: variant.id,
       variantLabel: variant.label,
@@ -141,7 +142,8 @@ describe("renderFinalPlanToSvg", () => {
       orientationKnown: false,
     });
 
-    expect(render.svg).toContain("N orientativo");
+    expect(render.svg).toContain('id="north-arrow"');
+    expect(render.svg).toContain(">N</text>");
   });
 
   it("hides north when orientation is known", () => {

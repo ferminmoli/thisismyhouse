@@ -22,10 +22,19 @@ const MAX_M_PER_UNIT = 2.8;
 const MIN_BBOX_FILL_RATIO = 0.32;
 const MAX_BBOX_FILL_RATIO = 1.05;
 
+/** Offsets in plan coordinates — kept tight for readable exterior cotas. */
+const OFFSET = {
+  outerH: 1.15,
+  outerV: 1.15,
+  patioH: 0.95,
+  patioV: 0.9,
+} as const;
+
+/** Argentine decimal comma, e.g. 13,50 m */
 export function formatLengthM(meters: number): string {
   if (!Number.isFinite(meters) || meters <= 0) return "";
-  if (meters >= 10) return `${meters.toFixed(2)} m`;
-  return `${meters.toFixed(2)} m`;
+  const raw = meters.toFixed(2).replace(".", ",");
+  return `${raw} m`;
 }
 
 function coveredRooms(rooms: PlanRoom[]): PlanRoom[] {
@@ -97,21 +106,31 @@ function horizontalDimension(
   id: string,
   x1: number,
   x2: number,
-  y: number,
+  anchorY: number,
   meters: number,
   offset: number,
+  placement: "above" | "below",
 ): PlanDimension | null {
   const label = formatLengthM(meters);
   if (!label || x2 - x1 < 3) return null;
-  const dimY = y + offset;
+
+  const dimY =
+    placement === "above" ? anchorY - offset : anchorY + offset;
+
   return {
     id,
     x1,
     y1: dimY,
     x2,
     y2: dimY,
-    ext1: { x1, y1: y, x2: x1, y2: dimY },
-    ext2: { x1: x2, y1: y, x2, y2: dimY },
+    ext1:
+      placement === "above"
+        ? { x1, y1: dimY, x2: x1, y2: anchorY }
+        : { x1, y1: anchorY, x2: x1, y2: dimY },
+    ext2:
+      placement === "above"
+        ? { x1: x2, y1: dimY, x2, y2: anchorY }
+        : { x1: x2, y1: anchorY, x2, y2: dimY },
     label,
     labelX: (x1 + x2) / 2,
     labelY: dimY,
@@ -121,23 +140,32 @@ function horizontalDimension(
 
 function verticalDimension(
   id: string,
-  x: number,
+  anchorX: number,
   y1: number,
   y2: number,
   meters: number,
   offset: number,
+  side: "left" | "right" = "left",
 ): PlanDimension | null {
   const label = formatLengthM(meters);
   if (!label || y2 - y1 < 3) return null;
-  const dimX = x - offset;
+
+  const dimX = side === "left" ? anchorX - offset : anchorX + offset;
+
   return {
     id,
     x1: dimX,
     y1,
     x2: dimX,
     y2,
-    ext1: { x1: x, y1, x2: dimX, y2: y1 },
-    ext2: { x1: x, y1: y2, x2: dimX, y2 },
+    ext1:
+      side === "left"
+        ? { x1: anchorX, y1, x2: dimX, y2: y1 }
+        : { x1: anchorX, y1, x2: dimX, y2: y1 },
+    ext2:
+      side === "left"
+        ? { x1: anchorX, y1: y2, x2: dimX, y2 }
+        : { x1: anchorX, y1: y2, x2: dimX, y2 },
     label,
     labelX: dimX,
     labelY: (y1 + y2) / 2,
@@ -156,11 +184,14 @@ function largestRoom(
   );
 }
 
-/** At most 4 subtle estimated dimensions for the public plan. */
+/**
+ * Exterior cotas — overall covered size above/left, patio size below/right.
+ * At most 4 dimensions; short extension lines.
+ */
 export function buildPreliminaryDimensions(
   rooms: PlanRoom[],
   scale: PreliminaryScale,
-  plan?: GeneratedPlan,
+  _plan?: GeneratedPlan,
 ): PlanDimension[] {
   const m = scale.mPerCanvasUnit;
   const bounds = coveredBounds(rooms);
@@ -176,9 +207,10 @@ export function buildPreliminaryDimensions(
       "cov-width",
       bounds.minX,
       bounds.maxX,
-      bounds.maxY,
+      bounds.minY,
       bounds.width * m,
-      2.4,
+      OFFSET.outerH,
+      "above",
     ),
   );
 
@@ -189,52 +221,38 @@ export function buildPreliminaryDimensions(
       bounds.minY,
       bounds.maxY,
       bounds.height * m,
-      2.4,
+      OFFSET.outerV,
+      "left",
     ),
   );
 
   const patio = largestRoom(rooms, (r) => r.enclosure === "outdoor");
   if (patio && patio.width >= 5 && patio.height >= 3) {
+    const patioBottom = patio.y + patio.height;
+    const patioRight = patio.x + patio.width;
+
     push(
       horizontalDimension(
         "patio-width",
         patio.x,
-        patio.x + patio.width,
-        patio.y + patio.height,
+        patioRight,
+        patioBottom,
         patio.width * m,
-        1.8,
+        OFFSET.patioH,
+        "below",
       ),
     );
-    if (dims.length < 4) {
+
+    if (dims.length < 4 && patio.height >= 2.5) {
       push(
         verticalDimension(
           "patio-depth",
-          patio.x + patio.width,
+          patioRight,
           patio.y,
-          patio.y + patio.height,
+          patioBottom,
           patio.height * m,
-          1.6,
-        ),
-      );
-    }
-  }
-
-  if (dims.length < 4) {
-    const social = largestRoom(rooms, (r) => r.zoneType === "social");
-    if (
-      social &&
-      social.width >= 6 &&
-      social.enclosure === "covered" &&
-      social.id !== patio?.id
-    ) {
-      push(
-        horizontalDimension(
-          "social-width",
-          social.x,
-          social.x + social.width,
-          social.y + social.height,
-          social.width * m,
-          1.5,
+          OFFSET.patioV,
+          "right",
         ),
       );
     }

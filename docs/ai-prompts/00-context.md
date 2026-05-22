@@ -28,10 +28,12 @@ Actual result UI / public output files found:
 
 - `src/components/floorplan/result/FloorPlanResultView.tsx` — main public result UI; resolves recommended + selected variant.
 - `src/components/floorplan/result/FloorPlanResultPage.tsx` — compatibility wrapper around `FloorPlanResultView`.
-- `src/components/floorplan/result/PremiumFloorPlanSvg.tsx` — public renderer wrapper.
-- `src/components/floorplan/result/FloorPlanSvgRenderer.tsx` — adapts `PublicPlanGeometry` to `GeneratedPlan`, calls `renderPlanToSvg`.
-- `src/components/floorplan/result/PlanSvgViewer.tsx` — responsive SVG card/container.
-- `src/lib/architecture/svgRenderer.ts` — actual SVG string renderer.
+- `src/components/floorplan/result/FinalPlanRenderer.tsx` — **primary** public renderer (Argentine preliminary plan).
+- `src/lib/architecture/finalPlanRenderer.ts` + `src/lib/architecture/final-plan/*` — architectural SVG pipeline.
+- `src/components/floorplan/result/PremiumFloorPlanSvg.tsx` — deprecated wrapper; debug/legacy only.
+- `src/components/floorplan/result/FloorPlanSvgRenderer.tsx` — legacy adapter → `renderPlanToSvg`.
+- `src/components/floorplan/result/PlanSvgViewer.tsx` — responsive SVG container.
+- `src/lib/architecture/svgRenderer.ts` — legacy colorful renderer (not public default).
 - `src/lib/architecture/publicFloorPlanTypes.ts` — public result/data contract; excludes internals.
 - `src/lib/architecture/floorPlanPipelineTypes.ts` — re-exports public types and pipeline result types.
 - `src/lib/architecture/floorPlanResultPresenter.ts` — maps internal pipeline output to sanitized `publicResult` + optional debug.
@@ -48,7 +50,10 @@ Current debug/admin behavior:
 
 Important current tests:
 
-- `src/lib/architecture/tests/svgRenderer.test.ts`
+- `src/lib/architecture/tests/finalPlanRenderer.test.ts`
+- `src/lib/architecture/tests/sheetTitleBlock.test.ts`
+- `src/lib/architecture/tests/preliminaryDimensions.test.ts`
+- `src/lib/architecture/tests/svgRenderer.test.ts` (legacy)
 - `src/components/floorplan/result/FloorPlanResultView.test.tsx`
 - `src/components/floorplan/result/FloorPlanResultPage.test.tsx`
 - `src/lib/architecture/tests/floorPlanResultPresenter.test.ts`

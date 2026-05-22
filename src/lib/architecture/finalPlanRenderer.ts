@@ -15,7 +15,7 @@ export type FinalPlanRenderInput = {
 };
 
 export const FINAL_PLAN_DISCLAIMER =
-  "Plano preliminar conceptual — no apto para obra. Requiere validación profesional.";
+  "Planta preliminar — no apto para obra. Sin validez municipal. Revisión profesional requerida.";
 
 /** Public-facing architectural floor plan (Argentine / LatAm conventions). */
 export function renderFinalPlanToSvg(

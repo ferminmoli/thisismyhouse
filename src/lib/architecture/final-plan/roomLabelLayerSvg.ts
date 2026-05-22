@@ -1,8 +1,10 @@
 import { escapeXml } from "./planGeometryUtils";
 import type { PlanLabel } from "./types";
 
-const INK = "#1E293B";
-const MUTED = "#64748B";
+import { ARCH } from "./architecturalPalette";
+
+const INK = ARCH.ink;
+const MUTED = ARCH.inkMuted;
 const HALO = "#FFFFFF";
 const FONT = "Helvetica Neue, Helvetica, Arial, sans-serif";
 

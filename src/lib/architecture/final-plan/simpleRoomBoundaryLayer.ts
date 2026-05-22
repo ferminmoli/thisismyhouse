@@ -1,26 +1,22 @@
+import { ARCH } from "./architecturalPalette";
 import type { PlanRoom } from "./types";
 
+/** Monochrome fills + one stroke per zone (public path — no wall graph). */
 const FILLS = {
-  social: "#FAF9F7",
-  private: "#F7F5F9",
-  service: "#F8FAFC",
-  circulation: "#F5F5F4",
-  work: "#F4F7F5",
-  flex: "#FAFAF9",
-  outdoor: "#EEF6EE",
-  semi_outdoor: "#F8FAF8",
+  covered: ARCH.fillCovered,
+  outdoor: ARCH.fillOutdoor,
+  semi_outdoor: ARCH.fillSemi,
 } as const;
 
-/** Single stroke per zone — no wall graph. */
 const BOUNDARY = {
-  perimeter: { stroke: "#1E293B", width: 0.62 },
-  interior: { stroke: "#64748B", width: 0.36 },
-  outdoor: { stroke: "#94A3B8", width: 0.38, dash: ' stroke-dasharray="2.2 1.3"' },
-  semi: { stroke: "#94A3B8", width: 0.34, dash: ' stroke-dasharray="1.5 0.95"' },
+  perimeter: { stroke: ARCH.wallExterior, width: ARCH.wallExteriorWidth },
+  interior: { stroke: ARCH.wallInterior, width: ARCH.wallInteriorWidth },
+  outdoor: { stroke: ARCH.inkSoft, width: 0.34, dash: ' stroke-dasharray="2.4 1.2"' },
+  semi: { stroke: ARCH.inkSoft, width: 0.3, dash: ' stroke-dasharray="1.6 1"' },
 } as const;
 
 export type SimpleRoomBoundaryOptions = {
-  /** When wall graph debug is on, omit strokes to avoid double boundaries. */
+  /** When wall-graph debug is on, omit zone strokes to avoid doubling. */
   includeStroke?: boolean;
 };
 
@@ -42,18 +38,9 @@ function roomFill(room: PlanRoom): { fill: string; pattern: string | null } {
     return { fill: FILLS.outdoor, pattern: "arch-pat-outdoor" };
   }
   if (room.enclosure === "semi_covered") {
-    return { fill: FILLS.semi_outdoor, pattern: null };
+    return { fill: FILLS.semi_outdoor, pattern: "arch-pat-outdoor" };
   }
-  const key = room.zoneType as keyof typeof FILLS;
-  const fill =
-    key === "social" ||
-    key === "private" ||
-    key === "service" ||
-    key === "circulation" ||
-    key === "work"
-      ? FILLS[key]
-      : FILLS.flex;
-  return { fill, pattern: wetPattern(room) };
+  return { fill: FILLS.covered, pattern: wetPattern(room) };
 }
 
 function roomStroke(room: PlanRoom, includeStroke: boolean) {
@@ -77,7 +64,7 @@ function roomStroke(room: PlanRoom, includeStroke: boolean) {
   return { stroke: b.stroke, strokeWidth: b.width, dash: "" };
 }
 
-/** Public SimpleRoomBoundaryLayer — fill + one boundary stroke per zone. */
+/** Public SimpleRoomBoundaryLayer — fill + optional boundary stroke per zone. */
 export function renderSimpleRoomBoundaries(
   rooms: PlanRoom[],
   options: SimpleRoomBoundaryOptions = {},
