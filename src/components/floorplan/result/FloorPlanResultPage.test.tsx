@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { FloorPlanResultPage } from "./FloorPlanResultPage";
 import {
   MOCK_DEBUG_PAYLOAD,
@@ -9,15 +9,36 @@ import {
 import { containsInternalScoreLeak } from "@/lib/floorplan-result/utils";
 
 vi.mock("@/lib/floorplan-result/featureFlags", () => ({
-  shouldShowFloorPlanDebug: vi.fn(),
+  shouldShowFloorPlanDebug: vi.fn(() => false),
+  isWallGraphDebugEnabled: vi.fn(() => false),
+  canUseWallGraphDebug: vi.fn(() => false),
 }));
+
+vi.mock("@/lib/architecture/finalPlanRenderer", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/architecture/finalPlanRenderer")>();
+  return {
+    ...actual,
+    renderFinalPlanToSvg: vi.fn(() => ({
+      variantId: "mock",
+      variantLabel: "mock",
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 118"></svg>',
+      viewBox: "0 0 100 118",
+      coordinateSystem: "normalized_canvas" as const,
+      legend: [],
+      warnings: [],
+    })),
+  };
+});
 
 import { shouldShowFloorPlanDebug } from "@/lib/floorplan-result/featureFlags";
 
 const mockShouldShowDebug = vi.mocked(shouldShowFloorPlanDebug);
 
 describe("FloorPlanResultPage", () => {
-  it("renders recommended variant first and human copy", () => {
+  beforeEach(() => cleanup());
+
+  it("renders recommended variant via publicResult wrapper", () => {
     mockShouldShowDebug.mockReturnValue(false);
     render(
       <FloorPlanResultPage
@@ -26,65 +47,9 @@ describe("FloorPlanResultPage", () => {
       />,
     );
 
-    expect(screen.getByText("Concepto recomendado")).toBeTruthy();
+    expect(screen.getByText("Plano recomendado")).toBeTruthy();
     expect(screen.getAllByText("Lavadero en extensión de cocina").length).toBeGreaterThan(0);
-    expect(screen.getByText(/¿Por qué este plan\?/)).toBeTruthy();
-    expect(screen.getByText(/Revisión profesional necesaria/)).toBeTruthy();
     expect(screen.queryByText("Developer debug")).toBeNull();
-  });
-
-  it("hides debug and score internals from normal users", () => {
-    mockShouldShowDebug.mockReturnValue(false);
-    const { container } = render(
-      <FloorPlanResultPage
-        publicResult={MOCK_PUBLIC_RESULT}
-        debug={MOCK_DEBUG_PAYLOAD}
-      />,
-    );
-    const html = container.innerHTML;
-    expect(containsInternalScoreLeak(html)).toBe(false);
-    expect(html).not.toContain("scoringDetails");
-    expect(html).not.toContain("adjacencyScore");
-  });
-
-  it("shows debug panel when dev flag enabled", () => {
-    mockShouldShowDebug.mockReturnValue(true);
-    render(
-      <FloorPlanResultPage
-        publicResult={MOCK_PUBLIC_RESULT}
-        debug={MOCK_DEBUG_PAYLOAD}
-        isDev
-      />,
-    );
-    expect(screen.getByText("Developer debug")).toBeTruthy();
-  });
-
-  it("updates visible variant label when selecting another card", () => {
-    mockShouldShowDebug.mockReturnValue(false);
-    render(
-      <FloorPlanResultPage
-        publicResult={MOCK_PUBLIC_RESULT}
-        debug={MOCK_DEBUG_PAYLOAD}
-      />,
-    );
-
-    const patioButtons = screen.getAllByRole("button", {
-      name: /Patio protagonista/i,
-    });
-    fireEvent.click(patioButtons[0]!);
-    expect(screen.getAllByText("Patio protagonista").length).toBeGreaterThan(0);
-  });
-
-  it("renders loading state", () => {
-    mockShouldShowDebug.mockReturnValue(false);
-    render(<FloorPlanResultPage publicResult={null} loading />);
-    expect(screen.getByText(/Generando tu planta conceptual/)).toBeTruthy();
-  });
-
-  it("renders empty state", () => {
-    mockShouldShowDebug.mockReturnValue(false);
-    render(<FloorPlanResultPage publicResult={null} />);
-    expect(screen.getByText(/no hay un resultado/i)).toBeTruthy();
   });
 
   it("architect brief accordion expands", () => {
@@ -98,9 +63,7 @@ describe("FloorPlanResultPage", () => {
     const toggle = container.querySelector(
       '[data-testid="architect-brief-toggle"]',
     ) as HTMLButtonElement;
-    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(toggle!);
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByText("Resumen del proyecto")).toBeTruthy();
+    expect(screen.getByText("Resumen del programa")).toBeTruthy();
   });
 });

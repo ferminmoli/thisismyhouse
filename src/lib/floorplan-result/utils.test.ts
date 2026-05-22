@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   confidenceBadge,
   containsInternalScoreLeak,
-  findSvgForVariant,
   resolveInitialVariantId,
 } from "./utils";
-import { shouldShowFloorPlanDebug } from "./featureFlags";
+import {
+  canUseWallGraphDebug,
+  isWallGraphDebugEnabled,
+  shouldShowFloorPlanDebug,
+} from "./featureFlags";
 import { MOCK_PUBLIC_RESULT } from "./fixtures";
 
 describe("floorplan-result utils", () => {
@@ -15,20 +18,15 @@ describe("floorplan-result utils", () => {
     );
   });
 
-  it("finds svg by variant id", () => {
-    const svg = findSvgForVariant(
-      MOCK_PUBLIC_RESULT.svgPlans,
-      "expand_patio",
-    );
-    expect(svg?.variantLabel).toBe("Patio protagonista");
-  });
-
   it("confidence labels are user-facing", () => {
-    expect(confidenceBadge("medium_low").label).toBe("Confianza conceptual");
+    expect(confidenceBadge("medium_low").label).toBe("Confianza media-baja");
   });
 
   it("detects internal score leak strings", () => {
     expect(containsInternalScoreLeak('{"penalties":{}}')).toBe(true);
+    expect(containsInternalScoreLeak("adjacencyScore: 12")).toBe(true);
+    expect(containsInternalScoreLeak("daylightScore")).toBe(true);
+    expect(containsInternalScoreLeak("Developer debug")).toBe(true);
     expect(containsInternalScoreLeak("Buen patio con living")).toBe(false);
   });
 });
@@ -45,5 +43,27 @@ describe("shouldShowFloorPlanDebug", () => {
 
   it("returns true when isAdmin", () => {
     expect(shouldShowFloorPlanDebug({ isAdmin: true })).toBe(true);
+  });
+});
+
+describe("wallGraphDebug", () => {
+  it("is off for normal users even if toggle requested", () => {
+    expect(
+      isWallGraphDebugEnabled({
+        isAdmin: false,
+        isDev: false,
+        wallGraphDebug: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("requires dev/admin and explicit toggle", () => {
+    expect(
+      isWallGraphDebugEnabled({ isDev: true, wallGraphDebug: false }),
+    ).toBe(false);
+    expect(
+      isWallGraphDebugEnabled({ isDev: true, wallGraphDebug: true }),
+    ).toBe(true);
+    expect(canUseWallGraphDebug({ isAdmin: true })).toBe(true);
   });
 });

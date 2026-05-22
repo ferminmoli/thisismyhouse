@@ -93,14 +93,35 @@ export {
   type SvgPlanRender,
   type VisualInspirationPrompt,
 } from "./floorPlanPipeline";
-export { renderPlanToSvg, renderVariantsToSvg } from "./svgRenderer";
+export {
+  renderPlanToSvg,
+  renderVariantsToSvg,
+  type NormalizedPlanInput,
+  type RenderPlanSvgParams,
+} from "./svgRenderer";
+export {
+  renderFinalPlanToSvg,
+  buildPlanViewModel,
+  renderArchitecturalPlanSvg,
+  FINAL_PLAN_DISCLAIMER,
+  type FinalPlanRenderInput,
+} from "./finalPlanRenderer";
+export type {
+  ArchitecturalPlanViewModel,
+  BuildViewModelInput,
+} from "./final-plan";
 export { generateArchitectBrief } from "./architectBriefGenerator";
 export { generateVisualInspirationPrompt } from "./visualInspirationPrompt";
+export { toFloorPlanPipelineResult } from "./pipelinePublicOutput";
 export {
-  buildPublicFloorPlanResult,
-  buildFloorPlanDebugPayload,
-  toFloorPlanPipelineResult,
-} from "./pipelinePublicOutput";
+  presentFloorPlanPipeline,
+  FloorPlanResultPresenter,
+  assertPublicResultSanitized,
+} from "./floorPlanResultPresenter";
+export type {
+  PresentedFloorPlanResult,
+  PresentFloorPlanPipelineOptions,
+} from "./publicFloorPlanTypes";
 export type {
   PipelineRunStatus,
   ProgramExtractionResult,

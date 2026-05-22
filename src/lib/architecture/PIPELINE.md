@@ -28,7 +28,8 @@ Wall graph building is deferred; openings are derived from zone geometry at rend
 
 ## Public vs debug
 
-- **`publicResult`** — Safe for end users: labels, summaries, SVG, architect brief, confidence level, disclaimers. No raw penalties or internal mutation scoring.
+- **`publicResult`** — Curated via `FloorPlanResultPresenter` (`presentFloorPlanPipeline`): recommended + top 3 variants with public-safe plan geometry, brief, confidence, disclaimer. No penalties, validation objects, or stage traces.
+- **`debug`** — Optional (dev/admin): stages, scored variants, selection method, raw validation. Omitted in production unless debug flags are on.
 - **`debug`** — Admin/dev: full stages, `scoringDetails`, `validationDetails`, `plansById`, selection trace.
 
 ## Ranking rules

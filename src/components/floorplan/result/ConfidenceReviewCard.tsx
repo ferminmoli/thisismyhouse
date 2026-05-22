@@ -4,25 +4,28 @@ import type { PublicConfidence } from "@/lib/architecture/floorPlanPipelineTypes
 type Props = {
   confidence: PublicConfidence;
   requiredProfessionalReview: string[];
+  disclaimer?: string;
 };
 
 export function ConfidenceReviewCard({
   confidence,
   requiredProfessionalReview,
+  disclaimer,
 }: Props) {
   const badge = confidenceBadge(confidence.level);
 
   return (
     <section
-      className="rounded-2xl border border-amber-200/90 bg-gradient-to-b from-amber-50/90 to-white p-5 shadow-sm"
+      className="rounded-2xl border border-amber-200/80 bg-gradient-to-b from-amber-50/80 to-white p-5 shadow-sm shadow-amber-100/30"
       aria-labelledby="professional-review-title"
+      data-testid="confidence-review-card"
     >
       <div className="flex gap-3">
         <span
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-lg"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100/90 text-sm font-semibold text-amber-900"
           aria-hidden
         >
-          🛡
+          ✓
         </span>
         <div className="min-w-0 flex-1">
           <h2
@@ -31,22 +34,23 @@ export function ConfidenceReviewCard({
           >
             Revisión profesional necesaria
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-amber-900/90">
-            Arc generó un layout conceptual según tu pedido. Antes de usarlo
-            para diseño u obra, un profesional debe validar lo siguiente.
+          <p className="mt-2 text-sm leading-relaxed text-amber-950/90">
+            <span className="font-medium">{badge.label}</span>
+            {" · "}
+            Esta propuesta es conceptual: prepara la conversación con un
+            arquitecto, no reemplaza su trabajo ni certifica factibilidad de obra.
           </p>
-          <span
-            className={`mt-3 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ${badge.className}`}
-          >
-            {badge.label}
-          </span>
         </div>
       </div>
 
       {confidence.reasons.length > 0 && (
         <ul className="mt-4 space-y-2 border-t border-amber-100/80 pt-4">
           {confidence.reasons.map((r, i) => (
-            <li key={i} className="text-xs leading-relaxed text-amber-950/85">
+            <li
+              key={i}
+              className="flex gap-2 text-xs leading-relaxed text-amber-950/85"
+            >
+              <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-500/70" aria-hidden />
               {r}
             </li>
           ))}
@@ -58,12 +62,18 @@ export function ConfidenceReviewCard({
           {requiredProfessionalReview.map((item, i) => (
             <li
               key={i}
-              className="rounded-lg bg-white/70 px-3 py-2 text-xs text-slate-700 ring-1 ring-amber-100"
+              className="rounded-lg bg-white/80 px-3 py-2 text-xs text-stone-700 ring-1 ring-amber-100/90"
             >
               {item}
             </li>
           ))}
         </ul>
+      )}
+
+      {disclaimer && (
+        <p className="mt-4 border-t border-amber-100/80 pt-3 text-[11px] leading-relaxed text-stone-600">
+          {disclaimer}
+        </p>
       )}
     </section>
   );

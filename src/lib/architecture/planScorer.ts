@@ -668,6 +668,18 @@ function penaltyTotal(penalties: PlanScorePenalties): number {
   );
 }
 
+/** Única fuente del puntaje total publicado (subtotal − penalizaciones). */
+export function computeFinalTotalScore(
+  subtotal: number,
+  penalties: PlanScorePenalties,
+): number {
+  return clampTotal(subtotal - penaltyTotal(penalties));
+}
+
+export function getFinalTotalScore(score: PlanScoreBreakdown): number {
+  return score.total;
+}
+
 function buildReasons(parts: string[][]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -730,7 +742,7 @@ export function scorePlanVariant(
     orientationConf +
     intent.score;
 
-  const total = clampTotal(subtotal - penaltyTotal(penalties));
+  const total = computeFinalTotalScore(subtotal, penalties);
 
   const reasons = buildReasons([
     adj.reasons,
@@ -778,7 +790,9 @@ export function compareScoredVariants(
   a: ScoredPlanVariant,
   b: ScoredPlanVariant,
 ): number {
-  if (b.score.total !== a.score.total) return b.score.total - a.score.total;
+  const totalA = getFinalTotalScore(a.score);
+  const totalB = getFinalTotalScore(b.score);
+  if (totalB !== totalA) return totalB - totalA;
   if (b.score.adjacencyScore !== a.score.adjacencyScore) {
     return b.score.adjacencyScore - a.score.adjacencyScore;
   }
@@ -794,17 +808,90 @@ export function compareScoredVariants(
   );
 }
 
-/** Lista única ordenada por `score.total` descendente; asigna `rank` secuencial. */
+/** Lista única ordenada por `score.total` final descendente; asigna `rank` en copias nuevas. */
 export function buildFinalRankedVariants(
   scoredVariants: ScoredPlanVariant[],
 ): ScoredPlanVariant[] {
-  const ranked = scoredVariants
+  return scoredVariants
     .filter(isRankEligibleScoredVariant)
-    .sort(compareScoredVariants);
-  ranked.forEach((v, i) => {
-    v.rank = i + 1;
-  });
-  return ranked;
+    .slice()
+    .sort(compareScoredVariants)
+    .map((v, i) => ({
+      ...v,
+      rank: i + 1,
+    }));
+}
+
+export type ScorerRankingOutputs = Pick<
+  PlanScorerResult,
+  "scoredVariants" | "topVariants" | "recommendedVariant"
+>;
+
+/** Deriva ranked list, top-N y recomendada desde la misma lista ya puntuada. */
+export function deriveScorerRankingOutputs(
+  scoredWithFinalTotals: ScoredPlanVariant[],
+  topN: number,
+): ScorerRankingOutputs {
+  const scoredVariants = buildFinalRankedVariants(scoredWithFinalTotals);
+  const topVariants = scoredVariants.slice(0, topN);
+  const recommendedVariant = scoredVariants[0] ?? null;
+  assertRankingInvariants(scoredVariants, topVariants, recommendedVariant, topN);
+  return { scoredVariants, topVariants, recommendedVariant };
+}
+
+/** Invariantes de ranking (usado en tests y validación interna). */
+export function assertRankingInvariants(
+  scoredVariants: ScoredPlanVariant[],
+  topVariants: ScoredPlanVariant[],
+  recommendedVariant: ScoredPlanVariant | null,
+  topN = TOP_N_DEFAULT,
+): void {
+  if (scoredVariants.length === 0) {
+    if (recommendedVariant !== null || topVariants.length > 0) {
+      throw new Error(
+        "ranking invariant: empty scoredVariants requires null recommended and empty topVariants",
+      );
+    }
+    return;
+  }
+
+  if (recommendedVariant !== scoredVariants[0]) {
+    throw new Error(
+      "ranking invariant: recommendedVariant must be scoredVariants[0]",
+    );
+  }
+
+  const expectedTop = scoredVariants.slice(0, topN);
+  if (
+    topVariants.length !== expectedTop.length ||
+    topVariants.some((v, i) => v.mutationType !== expectedTop[i]?.mutationType)
+  ) {
+    throw new Error(
+      "ranking invariant: topVariants must equal scoredVariants.slice(0, topN)",
+    );
+  }
+
+  for (let i = 0; i < scoredVariants.length; i++) {
+    const v = scoredVariants[i]!;
+    if (v.rank !== i + 1) {
+      throw new Error(
+        `ranking invariant: rank ${v.rank} at index ${i} (expected ${i + 1})`,
+      );
+    }
+    if (!isRankEligibleScoredVariant(v)) {
+      throw new Error(
+        `ranking invariant: ineligible variant in scoredVariants: ${v.mutationType}`,
+      );
+    }
+    if (i > 0) {
+      const prev = scoredVariants[i - 1]!;
+      if (getFinalTotalScore(prev.score) < getFinalTotalScore(v.score)) {
+        throw new Error(
+          "ranking invariant: scoredVariants not sorted by final totalScore descending",
+        );
+      }
+    }
+  }
 }
 
 function variantNeedsImprovement(
@@ -867,19 +954,18 @@ export function scorePlanVariants(
     }
   }
 
-  const scoredVariants = buildFinalRankedVariants(
-    scorable.map((v) => ({
-      ...v,
-      score: scorePlanVariant(v, {
-        program: params.program,
-        topologyGraph: params.topologyGraph,
-        referencePlan: params.referencePlan,
-      }),
-    })),
-  );
+  const scoredWithFinalTotals: ScoredPlanVariant[] = scorable.map((v) => ({
+    ...v,
+    score: scorePlanVariant(v, {
+      program: params.program,
+      topologyGraph: params.topologyGraph,
+      referencePlan: params.referencePlan,
+    }),
+  }));
 
-  const topVariants = scoredVariants.slice(0, topN);
-  const recommendedVariant = scoredVariants[0] ?? null;
+  const { scoredVariants, topVariants, recommendedVariant } =
+    deriveScorerRankingOutputs(scoredWithFinalTotals, topN);
+
   const recommendation = recommendedVariant
     ? buildRecommendation(recommendedVariant, params.program)
     : null;

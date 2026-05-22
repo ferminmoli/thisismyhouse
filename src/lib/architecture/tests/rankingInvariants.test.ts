@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { runRecommendationEngine } from "../recommendationEngine";
-import { scorePlanVariants } from "../planScorer";
+import {
+  assertRankingInvariants,
+  scorePlanVariants,
+} from "../planScorer";
 import { generatePlanVariants } from "../variantGenerator";
 import {
   createGeneratedPlan,
@@ -107,5 +110,12 @@ describe("ranking invariants", () => {
     expect(scored.topVariants).toHaveLength(3);
     expect(scored.topVariants.map((v) => v.rank)).toEqual([1, 2, 3]);
     assertScoreOrderedRanking(scored.scoredVariants);
+    assertRankingInvariants(
+      scored.scoredVariants,
+      scored.topVariants,
+      scored.recommendedVariant,
+    );
+    expect(scored.recommendedVariant).toBe(scored.scoredVariants[0]);
+    expect(scored.topVariants).toEqual(scored.scoredVariants.slice(0, 3));
   });
 });

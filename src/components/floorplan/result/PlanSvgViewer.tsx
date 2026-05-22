@@ -1,4 +1,5 @@
-import type { SvgLegendItem, SvgPlanRender } from "@/lib/architecture/floorPlanPipelineTypes";
+import type { SvgPlanRender } from "@/lib/architecture/floorPlanPipelineTypes";
+import { PUBLIC_SVG_DISCLAIMER } from "@/lib/architecture/svgRenderer";
 
 type Props = {
   render: SvgPlanRender | null;
@@ -14,57 +15,43 @@ export function PlanSvgViewer({
   if (!render?.svg) {
     return (
       <div
-        className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center"
+        className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-stone-50/80 px-6 py-12 text-center"
         role="img"
         aria-label="Vista del plano no disponible"
       >
-        <p className="text-sm font-medium text-slate-700">Vista conceptual</p>
-        <p className="mt-2 max-w-sm text-sm text-slate-500">{fallbackMessage}</p>
+        <p className="text-sm font-medium text-stone-700">Vista conceptual</p>
+        <p className="mt-2 max-w-sm text-sm text-stone-500">{fallbackMessage}</p>
       </div>
     );
   }
 
+  const [, , viewW, viewH] = render.viewBox.split(" ").map(Number);
+  const aspect = viewW > 0 && viewH > 0 ? viewW / viewH : 100 / 114;
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm shadow-slate-200/50">
-      <div className="border-b border-slate-100 px-4 py-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Planta conceptual
-        </p>
-        <p className="text-sm font-medium text-slate-800">{variantLabel}</p>
-      </div>
+    <figure className="w-full min-w-0 max-w-full" data-testid="premium-plan-svg-viewer">
       <div
-        className="aspect-square w-full max-h-[min(72vh,640px)] bg-[#FAFAF8] p-3 sm:p-5"
+        className="overflow-hidden rounded-2xl border border-stone-200/70 bg-[#F6F4F0] shadow-[0_1px_3px_rgba(42,38,34,0.06),0_8px_24px_rgba(42,38,34,0.04)] ring-1 ring-stone-200/40"
         role="img"
         aria-label={`Plano conceptual: ${variantLabel}`}
       >
         <div
-          className="h-full w-full [&>svg]:h-full [&>svg]:w-full [&>svg]:max-h-full [&>svg]:object-contain"
-          dangerouslySetInnerHTML={{ __html: render.svg }}
-        />
-      </div>
-      {render.legend.length > 0 && (
-        <LegendRow items={render.legend} />
-      )}
-    </div>
-  );
-}
-
-function LegendRow({ items }: { items: SvgLegendItem[] }) {
-  return (
-    <div className="flex flex-wrap gap-3 border-t border-slate-100 px-4 py-3">
-      {items.slice(0, 5).map((item) => (
-        <span
-          key={item.key}
-          className="inline-flex items-center gap-1.5 text-[11px] text-slate-600"
+          className="w-full p-3 sm:p-5 md:p-6"
+          style={{
+            aspectRatio: String(aspect),
+            maxHeight: "min(82vh, 820px)",
+            minHeight: "min(72vw, 320px)",
+          }}
         >
-          <span
-            className="h-2.5 w-2.5 rounded-sm ring-1 ring-slate-200"
-            style={{ backgroundColor: item.color }}
-            aria-hidden
+          <div
+            className="h-full w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full [&>svg]:max-w-full [&>svg]:object-contain"
+            dangerouslySetInnerHTML={{ __html: render.svg }}
           />
-          {item.label}
-        </span>
-      ))}
-    </div>
+        </div>
+      </div>
+      <figcaption className="mt-2.5 px-1 text-center text-[11px] leading-relaxed text-stone-500 sm:text-xs">
+        {PUBLIC_SVG_DISCLAIMER}
+      </figcaption>
+    </figure>
   );
 }

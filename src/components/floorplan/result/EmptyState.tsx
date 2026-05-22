@@ -2,14 +2,21 @@ type Props = {
   message?: string;
 };
 
+const DEFAULT_MESSAGE =
+  "No pudimos generar una planta confiable con estos datos. Probá agregando medidas del lote, orientación y ambientes deseados.";
+
 export function FloorPlanResultEmptyState({
-  message = "Todavía no hay un resultado de planta disponible.",
+  message = DEFAULT_MESSAGE,
 }: Props) {
   return (
-    <div className="flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/60 px-6 py-12 text-center">
-      <p className="text-sm font-medium text-slate-800">{message}</p>
-      <p className="mt-2 max-w-sm text-xs text-slate-500">
-        Completá el brief inicial para generar conceptos.
+    <div
+      className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-stone-50/80 px-6 py-12 text-center"
+      role="status"
+    >
+      <p className="text-base font-medium text-stone-800">{message}</p>
+      <p className="mt-3 max-w-md text-sm leading-relaxed text-stone-500">
+        Cuanto más contexto aportes sobre el terreno y el programa, más precisa
+        será la propuesta conceptual.
       </p>
     </div>
   );

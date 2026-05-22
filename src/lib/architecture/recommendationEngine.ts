@@ -287,10 +287,8 @@ export function runRecommendationEngine(
     topN: params.topN,
   });
 
-  const ranked = scorerResult.scoredVariants;
-  const selectionMethod = buildSelectionMethod(ranked);
-  const topVariants = ranked.slice(0, params.topN ?? 3);
-  const recommendedVariant = ranked[0] ?? null;
+  const { scoredVariants, topVariants, recommendedVariant } = scorerResult;
+  const selectionMethod = buildSelectionMethod(scoredVariants);
   const userPrompt = params.userPrompt ?? params.program.inputSummary;
 
   const recommendation =
@@ -305,32 +303,9 @@ export function runRecommendationEngine(
 
   return {
     ...scorerResult,
-    topVariants,
-    recommendedVariant,
     recommendation,
     stageOutput: {
       ...scorerResult.stageOutput,
-      recommendedVariant: recommendedVariant
-        ? {
-            mutationType: recommendedVariant.mutationType,
-            label: recommendedVariant.label,
-            totalScore: recommendedVariant.score.total,
-          }
-        : null,
-      topVariants: topVariants.map((v) => ({
-        rank: v.rank!,
-        mutationType: v.mutationType,
-        label: v.label,
-        totalScore: v.score.total,
-        adjacencyScore: v.score.adjacencyScore,
-        daylightScore: v.score.daylightScore,
-        socialOutdoorScore: v.score.socialOutdoorScore,
-        privateWingScore: v.score.privateWingScore,
-        kitchenIntegrationScore: v.score.kitchenIntegrationScore,
-        areaEfficiencyScore: v.score.areaEfficiencyScore,
-        mutationIntentScore: v.score.mutationIntentScore,
-        reasons: v.score.reasons,
-      })),
       selectionMethod: selectionMethod ?? null,
       nearTieThreshold: NEAR_TIE_THRESHOLD,
       narrativeSummary: recommendation?.narrativeSummary ?? null,

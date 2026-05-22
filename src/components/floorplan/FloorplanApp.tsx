@@ -20,7 +20,10 @@ import { PipelineDebugPanel } from "@/components/floorplan/PipelineDebugPanel";
 import type { MutationType } from "@/lib/architecture/mutations";
 import { runFloorPlanPipeline } from "@/lib/architecture/floorPlanPipeline";
 import type { FloorPlanPipelineResult } from "@/lib/architecture/floorPlanPipelineTypes";
-import { FloorPlanResultPage } from "@/components/floorplan/result/FloorPlanResultPage";
+import {
+  FloorPlanResultView,
+  pipelineResultToPresented,
+} from "@/components/floorplan/result/FloorPlanResultPage";
 import { buildPromptFromPreferences } from "@/lib/onboarding/user-preferences";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -239,8 +242,7 @@ export function FloorplanApp() {
       }
 
       const recommendedType =
-        (floorPlanPipeline.recommendedVariant?.mutationType ??
-          floorPlanPipeline.publicResult.recommendedVariantId ??
+        (floorPlanPipeline.publicResult.recommendedVariant.id ??
           "base") as MutationType;
       setSelectedPipelineVariant(recommendedType);
 
@@ -352,9 +354,8 @@ export function FloorplanApp() {
 
       {showConceptResult && (
         <div className="rounded-3xl bg-white/70 p-4 shadow-sm ring-1 ring-stone-200/60 sm:p-6 lg:p-8">
-          <FloorPlanResultPage
-            publicResult={state.floorPlanPipeline?.publicResult ?? null}
-            debug={state.floorPlanPipeline?.debug ?? null}
+          <FloorPlanResultView
+            result={pipelineResultToPresented(state.floorPlanPipeline)}
             loading={!state.floorPlanPipeline}
             error={
               state.floorPlanPipeline?.status === "failed"

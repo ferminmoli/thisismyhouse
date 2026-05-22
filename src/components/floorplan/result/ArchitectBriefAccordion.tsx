@@ -1,24 +1,53 @@
 "use client";
 
-import type { ArchitectBrief } from "@/lib/architecture/floorPlanPipelineTypes";
+import type { PublicArchitectBrief } from "@/lib/architecture/floorPlanPipelineTypes";
 import { useId, useState } from "react";
 
 type Props = {
-  brief: ArchitectBrief;
+  brief: PublicArchitectBrief;
+  selectedVariantLabel?: string;
+  professionalChecks?: string[];
   defaultOpen?: boolean;
 };
 
 export function ArchitectBriefAccordion({
   brief,
+  selectedVariantLabel,
+  professionalChecks = [],
   defaultOpen = false,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const panelId = useId();
   const buttonId = useId();
 
+  const roomLines = brief.rooms
+    .map((r) => {
+      const m2 =
+        r.estimatedAreaM2 != null
+          ? ` · ~${Math.round(r.estimatedAreaM2)} m²`
+          : "";
+      return `${r.label}${m2}`;
+    })
+    .filter(Boolean);
+
+  const areaLines = [
+    brief.areas.coveredM2 != null
+      ? `Cubierto estimado: ~${Math.round(brief.areas.coveredM2)} m²`
+      : null,
+    brief.areas.outdoorM2 != null
+      ? `Exterior estimado: ~${Math.round(brief.areas.outdoorM2)} m²`
+      : null,
+    brief.areas.semiCoveredM2 != null
+      ? `Semi-cubierto: ~${Math.round(brief.areas.semiCoveredM2)} m²`
+      : null,
+    brief.areas.totalM2 != null
+      ? `Total programa: ~${Math.round(brief.areas.totalM2)} m²`
+      : null,
+  ].filter((x): x is string => Boolean(x));
+
   return (
-    <section className="rounded-2xl border border-slate-200/90 bg-white shadow-sm">
-      <h2 className="sr-only">Brief para arquitecto</h2>
+    <section className="rounded-2xl border border-stone-200/90 bg-white shadow-sm">
+      <h2 className="sr-only">Brief para revisar con un arquitecto</h2>
       <button
         id={buttonId}
         type="button"
@@ -26,13 +55,12 @@ export function ArchitectBriefAccordion({
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
         data-testid="architect-brief-toggle"
-        aria-label="Brief para arquitecto, expandir o contraer"
-        className="flex w-full items-center justify-between gap-4 rounded-2xl px-5 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        className="flex w-full items-center justify-between gap-4 rounded-2xl px-5 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
       >
-        <span className="text-sm font-semibold text-slate-900">
-          Brief para arquitecto
+        <span className="text-sm font-semibold text-stone-900">
+          Brief para revisar con un arquitecto
         </span>
-        <span className="text-xs text-slate-500" aria-hidden>
+        <span className="text-xs text-stone-500" aria-hidden>
           {open ? "Ocultar" : "Ver detalle"}
         </span>
       </button>
@@ -41,36 +69,28 @@ export function ArchitectBriefAccordion({
           id={panelId}
           role="region"
           aria-labelledby={buttonId}
-          className="space-y-6 border-t border-slate-100 px-5 py-5 text-sm text-slate-700"
+          data-testid="architect-brief-panel"
+          className="space-y-5 border-t border-stone-100 px-5 py-5 text-sm text-stone-700"
         >
-          <BriefBlock title="Resumen del proyecto" body={brief.projectSummary} />
-          <BriefBlock title="Concepto recomendado" body={brief.recommendedConcept} />
-          <BriefList
-            title="Programa"
-            items={[
-              brief.program.coveredAreaTargetM2 != null
-                ? `Superficie cubierta objetivo: ~${brief.program.coveredAreaTargetM2} m²`
-                : null,
-              brief.program.outdoorAreaTargetM2 != null
-                ? `Exterior objetivo: ~${brief.program.outdoorAreaTargetM2} m²`
-                : null,
-              ...brief.program.rooms,
-            ].filter((x): x is string => Boolean(x))}
-          />
-          <BriefList title="Estrategia espacial" items={brief.spatialStrategy} />
-          <BriefList title="Adjacencias clave" items={brief.keyAdjacencies} />
-          <BriefList title="Núcleo de servicios" items={brief.serviceCoreNotes} />
-          <BriefList
-            title="Luz y ventilación"
-            items={brief.daylightAndVentilationNotes}
-          />
-          {brief.unresolvedQuestions.length > 0 && (
-            <BriefList title="Preguntas abiertas" items={brief.unresolvedQuestions} />
+          <p className="text-xs leading-relaxed text-stone-500">
+            Resumen para llevar a una reunión profesional. Las superficies son
+            estimadas; no constituyen medidas de obra.
+          </p>
+          {brief.summary?.trim() && (
+            <BriefBlock title="Resumen del programa" body={brief.summary} />
           )}
+          {selectedVariantLabel?.trim() && (
+            <BriefBlock title="Variante mostrada" body={selectedVariantLabel} />
+          )}
+          <BriefList title="Decisiones clave" items={brief.keyDecisions} />
+          <BriefList title="Superficies estimadas" items={areaLines} />
+          <BriefList title="Ambientes" items={roomLines} />
           <BriefList
-            title="Validación profesional"
-            items={brief.professionalValidationRequired}
+            title="Qué validar profesionalmente"
+            items={professionalChecks}
           />
+          <BriefList title="Advertencias y supuestos" items={brief.warnings} />
+          <BriefList title="Próximos pasos" items={brief.nextSteps} />
         </div>
       )}
     </section>
@@ -78,9 +98,10 @@ export function ArchitectBriefAccordion({
 }
 
 function BriefBlock({ title, body }: { title: string; body: string }) {
+  if (!body.trim()) return null;
   return (
     <div>
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-stone-500">
         {title}
       </h3>
       <p className="mt-2 leading-relaxed">{body}</p>
@@ -89,14 +110,15 @@ function BriefBlock({ title, body }: { title: string; body: string }) {
 }
 
 function BriefList({ title, items }: { title: string; items: string[] }) {
-  if (!items.length) return null;
+  const filtered = items.filter((item) => item?.trim());
+  if (!filtered.length) return null;
   return (
     <div>
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-stone-500">
         {title}
       </h3>
       <ul className="mt-2 list-disc space-y-1 pl-5">
-        {items.map((item, i) => (
+        {filtered.map((item, i) => (
           <li key={i} className="leading-relaxed">
             {item}
           </li>

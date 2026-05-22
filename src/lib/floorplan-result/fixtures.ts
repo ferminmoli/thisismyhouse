@@ -1,141 +1,158 @@
 import type {
-  FloorPlanDebugPayload,
+  FloorPlanDebug,
   PublicFloorPlanResult,
+  PublicFloorPlanVariant,
+  PublicPlanGeometry,
 } from "@/lib/architecture/floorPlanPipelineTypes";
+
+const MOCK_PLAN: PublicPlanGeometry = {
+  id: "plan_mock",
+  title: "Casa familiar compacta en L",
+  templateId: "l_shape_patio",
+  variantLabel: "Base",
+  zones: [
+    {
+      id: "zone_SALA",
+      label: "Sala / comedor",
+      type: "social",
+      x: 20,
+      y: 52,
+      width: 38,
+      height: 28,
+      estimatedAreaM2: 32,
+      areaKind: "covered",
+    },
+    {
+      id: "zone_PATIO",
+      label: "Patio",
+      type: "outdoor",
+      x: 20,
+      y: 80,
+      width: 56,
+      height: 16,
+      estimatedAreaM2: 10,
+      areaKind: "outdoor",
+    },
+  ],
+  doors: [
+    {
+      id: "d1",
+      from: "SALA_COMEDOR",
+      to: "PATIO",
+      type: "sliding",
+      wall: "bottom",
+      position: 50,
+      width: 8,
+    },
+  ],
+  windows: [],
+  furniture: [],
+  areaEstimate: {
+    coveredM2: 100,
+    outdoorM2: 10,
+    semiCoveredM2: 0,
+    totalM2: 110,
+    confidence: "medium",
+  },
+};
+
+function variant(
+  id: string,
+  label: string,
+  rank: number,
+  highlights: string[],
+): PublicFloorPlanVariant {
+  return {
+    id,
+    label,
+    description: highlights[0] ?? label,
+    rank,
+    score: 90 - rank * 3,
+    plan: { ...MOCK_PLAN, id: `plan_${id}`, variantLabel: label },
+    highlights,
+  };
+}
+
+const REC = variant(
+  "add_laundry_as_kitchen_extension",
+  "Lavadero en extensión de cocina",
+  1,
+  ["Completa el programa familiar con área de servicio ventilada."],
+);
 
 export const MOCK_PUBLIC_RESULT: PublicFloorPlanResult = {
   title: "Casa familiar compacta en L",
-  recommendedVariantLabel: "Lavadero en extensión de cocina",
-  recommendedVariantId: "add_laundry_as_kitchen_extension",
-  summary:
-    "Recomendamos una variante que completa el programa familiar con lavadero ventilado.",
+  recommendedVariant: REC,
+  topVariants: [
+    REC,
+    variant("expand_patio", "Patio protagonista", 2, [
+      "Refuerza la conexión social-exterior.",
+    ]),
+    variant("integrate_kitchen", "Cocina más integrada", 3, [
+      "Mejor integración cocina–living.",
+    ]),
+  ],
   whyRecommended: [
     "Mantiene living/comedor conectado al patio.",
     "Agrega lavadero sin romper el núcleo de cocina.",
     "Conserva el ala privada de dormitorios.",
   ],
-  topVariants: [
-    {
-      variantId: "add_laundry_as_kitchen_extension",
-      label: "Lavadero en extensión de cocina",
-      rank: 1,
-      summary: "Lavadero adosado a cocina con ventilación.",
-      highlights: ["Completa el programa familiar con área de servicio ventilada."],
-    },
-    {
-      variantId: "expand_patio",
-      label: "Patio protagonista",
-      rank: 2,
-      summary: "Mayor presencia del patio social.",
-      highlights: ["Refuerza la conexión social-exterior."],
-    },
-    {
-      variantId: "integrate_kitchen",
-      label: "Cocina más integrada",
-      rank: 3,
-      summary: "Cocina más abierta al living.",
-      highlights: ["Mejor integración cocina–living."],
-    },
-  ],
-  svgPlans: [
-    {
-      variantId: "add_laundry_as_kitchen_extension",
-      variantLabel: "Lavadero en extensión de cocina",
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><title>Test</title><rect width="100" height="100" fill="#FAFAF8"/></svg>',
-      viewBox: "0 0 100 100",
-      coordinateSystem: "normalized_canvas",
-      legend: [{ key: "covered", label: "Cubierto", color: "#F5F2EB" }],
-      warnings: [],
-    },
-    {
-      variantId: "expand_patio",
-      variantLabel: "Patio protagonista",
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><title>Patio</title><rect width="100" height="100" fill="#D4EBD4"/></svg>',
-      viewBox: "0 0 100 100",
-      coordinateSystem: "normalized_canvas",
-      legend: [],
-      warnings: [],
-    },
-  ],
+  confidence: {
+    level: "medium_low",
+    reasons: [
+      "La geometría conceptual cumple las relaciones principales.",
+      "La orientación del lote todavía no fue informada.",
+      "Las medidas reales del terreno no fueron validadas.",
+      "Debe revisarse normativa y factibilidad constructiva.",
+    ],
+  },
+  professionalReview: {
+    required: true,
+    items: ["Orientación solar", "Medidas del lote", "Estructura"],
+  },
   architectBrief: {
-    projectSummary: "Casa familiar en L de ~100 m².",
-    recommendedConcept: "Lavadero en extensión de cocina.",
-    program: { coveredAreaTargetM2: 100, rooms: ["Living", "Cocina", "3 dorm."] },
-    spatialStrategy: ["Parti en L con patio social."],
-    keyAdjacencies: ["Living ↔ Patio"],
-    serviceCoreNotes: ["Lavadero adosado a cocina."],
-    daylightAndVentilationNotes: ["Orientación por confirmar."],
-    unresolvedQuestions: ["¿Orientación del lote?"],
-    professionalValidationRequired: ["Orientación", "Estructura"],
+    summary:
+      "Una distribución compacta en L que prioriza el vínculo entre cocina, estar-comedor y patio, incorporando lavadero ventilado como extensión del núcleo húmedo.",
+    keyDecisions: ["Parti en L con patio social.", "Lavadero adosado a cocina."],
+    areas: { coveredM2: 100, outdoorM2: 10, totalM2: 110 },
+    rooms: [
+      {
+        id: "SALA_COMEDOR",
+        label: "Sala / comedor",
+        type: "social",
+        estimatedAreaM2: 32,
+        areaKind: "covered",
+      },
+      { id: "PATIO", label: "Patio", type: "outdoor", estimatedAreaM2: 10, areaKind: "outdoor" },
+    ],
+    warnings: ["La orientación solar del lote aún no está definida."],
+    nextSteps: ["Confirmar orientación del lote."],
   },
   visualInspiration: {
     prompt: "Casa familiar moderna con patio y luz natural cálida.",
-    styleTags: ["modern", "patio"],
-    safetyNote: "Solo referencia estética.",
+    notes: ["Solo referencia estética."],
   },
-  confidence: {
-    level: "medium_low",
-    reasons: ["Orientación desconocida."],
-  },
-  requiredProfessionalReview: ["Orientación", "Plomería"],
-  disclaimers: ["Plano conceptual."],
+  disclaimer:
+    "Esta es una propuesta de layout conceptual, no un plano de obra listo para construir.",
 };
 
-export const MOCK_DEBUG_PAYLOAD: FloorPlanDebugPayload = {
+export const MOCK_DEBUG_PAYLOAD: FloorPlanDebug = {
   requestId: "test-req",
-  pipelineStages: [],
-  allVariants: [],
-  ignoredVariants: [],
+  stages: [{ id: "plan_scorer", status: "ok", durationMs: 12 }],
+  scoredVariants: [
+    {
+      mutationType: "add_laundry_as_kitchen_extension",
+      rank: 1,
+      score: { total: 97, penalties: { warnings: 0 } },
+    },
+  ],
   selectionMethod: {
     rawTopVariant: "add_laundry_as_kitchen_extension",
     finalRecommendedVariant: "add_laundry_as_kitchen_extension",
     nearTieApplied: false,
     nearTieThreshold: 2,
     reason: "Score",
-    recommendedEqualsTopScored: true,
   },
-  validationDetails: [],
-  scoringDetails: [
-    {
-      variantId: "add_laundry_as_kitchen_extension",
-      label: "Lavadero",
-      rank: 1,
-      score: {
-        total: 97,
-        adjacencyScore: 10,
-        daylightScore: 8,
-        socialOutdoorScore: 9,
-        privateWingScore: 8,
-        kitchenIntegrationScore: 9,
-        areaEfficiencyScore: 7,
-        wetCoreEfficiencyScore: 9,
-        ventilationScore: 8,
-        dimensionalQualityScore: 8,
-        orientationConfidenceScore: 2,
-        mutationIntentScore: 5,
-        penalties: {
-          warnings: 0,
-          errors: 0,
-          skipped: 0,
-          invalidAdjacency: 0,
-          aspectRatio: 0,
-          excessiveMutation: 0,
-          missingLaundry: 0,
-          poorBedroomProportion: 0,
-          unknownOrientationDaylight: 1,
-          patioAsCovered: 0,
-          galleryAsFurniture: 0,
-          wetRoomsFar: 0,
-          noVentilation: 0,
-          laundryNoVentilation: 0,
-        },
-        reasons: ["Buen equilibrio."],
-      },
-    },
-  ],
-  architecturalIssues: [],
   warnings: [],
-  timings: [],
-  plansById: {},
-  recommendationRaw: null,
+  architecturalIssues: [],
 };

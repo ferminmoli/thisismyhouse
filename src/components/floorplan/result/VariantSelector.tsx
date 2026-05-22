@@ -1,46 +1,62 @@
 "use client";
 
-import type { PublicFloorPlanResult } from "@/lib/architecture/floorPlanPipelineTypes";
-import { isRecommendedVariant } from "@/lib/floorplan-result/utils";
+import type { PublicFloorPlanVariant } from "@/lib/architecture/floorPlanPipelineTypes";
+import { useId } from "react";
 import { VariantCard } from "./VariantCard";
 
 type Props = {
-  publicResult: PublicFloorPlanResult;
+  variants: PublicFloorPlanVariant[];
+  recommendedVariant: PublicFloorPlanVariant;
   selectedVariantId: string;
   onSelectVariant: (variantId: string) => void;
+  showScores?: boolean;
 };
 
 export function VariantSelector({
-  publicResult,
+  variants,
+  recommendedVariant,
   selectedVariantId,
   onSelectVariant,
+  showScores = false,
 }: Props) {
-  const variants = publicResult.topVariants.slice(0, 3);
+  const list = variants.slice(0, 3);
+  const panelId = useId();
 
-  if (variants.length === 0) return null;
+  if (list.length === 0) return null;
 
   return (
     <section aria-label="Variantes principales">
-      <h2 className="text-sm font-semibold text-slate-900">
-        Tres conceptos para comparar
+      <h2 className="text-sm font-medium text-stone-700">
+        Otras variantes
       </h2>
-      <p className="mt-1 text-xs text-slate-500">
-        Elegí otra opción para ver cómo cambia la planta y la explicación.
+      <p className="mt-0.5 text-xs text-stone-500">
+        La recomendada va primero. Elegí otra para actualizar el plano.
       </p>
       <div
-        className="mt-4 grid gap-3 sm:grid-cols-3"
-        role="group"
-        aria-label="Selector de variantes"
+        className="mt-4 -mx-1 flex gap-3 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0"
+        role="tablist"
+        aria-label="Selector de variantes del plano"
       >
-        {variants.map((v) => (
-          <VariantCard
-            key={v.variantId}
-            variant={v}
-            selected={selectedVariantId === v.variantId}
-            isRecommended={isRecommendedVariant(v, publicResult)}
-            onSelect={() => onSelectVariant(v.variantId)}
-          />
-        ))}
+        {list.map((v, index) => {
+          const tabId = `${panelId}-tab-${v.id}`;
+          return (
+            <div
+              key={v.id}
+              className="min-w-[min(86vw,248px)] shrink-0 snap-start sm:min-w-0"
+            >
+              <VariantCard
+                variant={v}
+                selected={selectedVariantId === v.id}
+                isRecommended={v.id === recommendedVariant.id}
+                listIndex={index}
+                tabId={tabId}
+                panelId={panelId}
+                onSelect={() => onSelectVariant(v.id)}
+                showScore={showScores}
+              />
+            </div>
+          );
+        })}
       </div>
     </section>
   );

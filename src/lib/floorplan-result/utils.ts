@@ -1,7 +1,6 @@
 import type {
   PublicFloorPlanResult,
-  PublicVariantSummary,
-  SvgPlanRender,
+  PublicFloorPlanVariant,
 } from "@/lib/architecture/floorPlanPipelineTypes";
 import type { PublicConfidence } from "@/lib/architecture/floorPlanPipelineTypes";
 
@@ -24,7 +23,7 @@ export function confidenceBadge(level: ConfidenceLevel): {
       };
     case "medium_low":
       return {
-        label: "Confianza conceptual",
+        label: "Confianza media-baja",
         className: "bg-amber-50 text-amber-950 ring-amber-200/80",
       };
     case "low":
@@ -36,62 +35,62 @@ export function confidenceBadge(level: ConfidenceLevel): {
   }
 }
 
-export function findSvgForVariant(
-  svgPlans: SvgPlanRender[],
-  variantId: string,
-  variantLabel?: string,
-): SvgPlanRender | undefined {
-  return (
-    svgPlans.find((s) => s.variantId === variantId) ??
-    (variantLabel
-      ? svgPlans.find((s) => s.variantLabel === variantLabel)
-      : undefined)
-  );
-}
+export {
+  resolveInitialVariantId,
+  resolveSelectedVariant,
+  getSelectableVariants,
+  stableVariantId,
+} from "./selection";
 
-export function resolveInitialVariantId(
-  publicResult: PublicFloorPlanResult,
-): string {
-  if (publicResult.recommendedVariantId) {
-    const hasSvg = findSvgForVariant(
-      publicResult.svgPlans,
-      publicResult.recommendedVariantId,
-      publicResult.recommendedVariantLabel,
-    );
-    const inTop = publicResult.topVariants.some(
-      (v) => v.variantId === publicResult.recommendedVariantId,
-    );
-    if (hasSvg || inTop) return publicResult.recommendedVariantId;
-  }
-  return publicResult.topVariants[0]?.variantId ?? "";
-}
-
-export function variantBenefitLine(variant: PublicVariantSummary): string {
+export function variantBenefitLine(variant: PublicFloorPlanVariant): string {
+  if (variant.description?.trim()) return variant.description.trim();
   if (variant.highlights[0]) return variant.highlights[0];
-  if (variant.summary) return variant.summary;
   return "Variante conceptual para comparar con el concepto recomendado.";
 }
 
+/** User-facing quality tag (not raw score). */
+export function variantQualityTag(
+  variant: PublicFloorPlanVariant,
+  options: { isRecommended: boolean; index: number },
+): string {
+  if (options.isRecommended) return "Recomendada";
+  if (options.index === 1) return "Muy buena alternativa";
+
+  const label = variant.label.toLowerCase();
+  if (label.includes("patio")) return "Más patio";
+  if (label.includes("cocina") || label.includes("integrad")) {
+    return "Más cocina integrada";
+  }
+  if (label.includes("social") || label.includes("estar")) return "Más social";
+  if (label.includes("lavadero") || label.includes("laundry")) {
+    return "Más servicio";
+  }
+  return `Alternativa ${variant.rank ?? options.index + 1}`;
+}
+
 export function isRecommendedVariant(
-  variant: PublicVariantSummary,
+  variant: PublicFloorPlanVariant,
   publicResult: PublicFloorPlanResult,
 ): boolean {
-  return (
-    variant.variantId === publicResult.recommendedVariantId ||
-    variant.label === publicResult.recommendedVariantLabel
-  );
+  return variant.id === publicResult.recommendedVariant.id;
 }
 
 /** Detects leaked internal scorer fields in serialized public UI. */
 export function containsInternalScoreLeak(htmlOrText: string): boolean {
   const forbidden = [
     "penalties",
-    "mutationIntentScore",
-    "adjacencyScore",
-    "invalidAdjacency",
-    "scoringDetails",
-    "totalScore",
+    "mutationintentscore",
+    "adjacencyscore",
+    "daylightscore",
+    "invalidadjacency",
+    "scoringdetails",
+    "hardadjacencychecks",
+    "doorcontactchecks",
+    "developer debug",
+    "scoredvariants",
+    "validation object",
+    "raw scorer",
   ];
   const lower = htmlOrText.toLowerCase();
-  return forbidden.some((f) => lower.includes(f.toLowerCase()));
+  return forbidden.some((f) => lower.includes(f));
 }
